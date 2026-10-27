@@ -1,0 +1,303 @@
+deployment:
+  scenario: PreinstalledAzureLocal
+  azure_local_os_installation_required: false
+  allow_reimage: false
+  allow_virtual_media: false
+  use_management_plane_only: true
+
+  # Stops Apply actions against already deployed or registered clusters.
+  block_existing_registered_cluster_changes: true
+
+  phase1_topology:
+    minimum_nodes: 1
+    maximum_nodes: 4
+    allow_single_node_validation: true
+    allow_single_node_onboarding: true
+    allowed_intents:
+      - ValidationOnly
+      - Onboarding
+      - Reference
+
+  # Current Phase 1.3 contract is readiness-only.
+  node_bootstrap:
+    mode: ReadinessOnly
+    approved_execution_method: NotApproved
+    allow_cluster_creation: false
+    allow_arc_registration: false
+    require_stage_12_completion: true
+    require_azure_government_session: true
+    require_resource_group_validation: true
+    require_resource_provider_validation: true
+
+naming:
+  classification: NAEA
+  site_id: NRFT
+  domain_short_name: adds
+  domain_fqdn: adds.navy.mil
+  node_name_pattern: "{classification}{site_id}HCN{node_number}"
+
+hardware:
+  manufacturer: Dell
+  platform: AX
+  baseline_file: config/hardware-baselines/dell-ax.yaml
+
+  network_adapter:
+    expected_driver_pattern: "*Mellanox*"
+
+  nic_mapping:
+    management1:
+      expected_name: Management1
+      pci_slot: 3
+      pci_function: 1
+      minimum_link_speed_gbps: 10
+
+    management2:
+      expected_name: Management2
+      pci_slot: 6
+      pci_function: 0
+      minimum_link_speed_gbps: 10
+
+    storage1:
+      expected_name: Storage1
+      pci_slot: 3
+      pci_function: 0
+      minimum_link_speed_gbps: 10
+
+    storage2:
+      expected_name: Storage2
+      pci_slot: 6
+      pci_function: 1
+      minimum_link_speed_gbps: 10
+
+  disabled_embedded_adapter_pattern: "Broadcom netXtreme*"
+
+  acceptable_disabled_adapter_statuses:
+    - Disabled
+    - Not Present
+
+  sriov:
+    required: true
+
+# Phase 2 readiness-only contract.
+# Site variables provide cluster, Azure, management, and storage values.
+cluster_deployment:
+  mode: ReadinessOnly
+  allow_cluster_creation: false
+  allow_resource_deployment: false
+  approved_execution_method: NotApproved
+
+  automation_mode: PortalAssisted
+
+  official_template:
+    mode: PlanOnly
+    source: MicrosoftOfficialPinned
+    version: NotSelected
+    expected_sha256: NotSelected
+    allow_validate_deployment: false
+    allow_deploy_deployment: false
+
+  arc_resource_bridge:
+    authentication_mode: Unresolved
+    service_principal_required: Unknown
+
+  safety:
+    block_existing_cluster: true
+    block_existing_registration: true
+    block_existing_azure_resource: true
+    require_phase_14_success: true
+
+  network:
+    management_network_name: Management
+    storage_network_count: 2
+    require_rdma: true
+    require_sriov: true
+
+  storage:
+    require_all_flash: false
+    require_storage_spaces_direct: true
+
+  deployment_template:
+    bicep_file: azure/deployment/main.bicep
+    bicep_parameter_file: azure/deployment/main.bicepparam
+
+network:
+  dhcp:
+    disable_on:
+      - Management1
+      - Management2
+      - Storage1
+      - Storage2
+
+  adapter_transition:
+    temporarily_disable:
+      - Management2
+      - Storage1
+      - Storage2
+
+    reenable_after_management_configuration:
+      - Management2
+      - Storage1
+      - Storage2
+
+  adapter_state:
+    required_enabled:
+      - Management1
+      - Management2
+      - Storage1
+      - Storage2
+
+    required_disabled_patterns:
+      - "Broadcom netXtreme*"
+
+  management:
+    primary_adapter: Management1
+
+  storage:
+    require_vlan_configuration: true
+    require_rdma: true
+    require_sriov: true
+
+remote_management:
+  protocol: WinRM-HTTPS
+  port: 5986
+  authentication: Negotiate
+  credential_username_env: FACTORY_ADDS_ADMIN_USER
+  credential_password_env: FACTORY_ADDS_ADMIN_PASSWORD
+  connection_timeout_seconds: 30
+  operation_timeout_seconds: 60
+
+  bootstrap_authentication_mode: LocalAdministrator
+  bootstrap_authentication_method: Negotiate
+  local_credential_username_env: FACTORY_LOCAL_ADMIN_USER
+  local_credential_password_env: FACTORY_LOCAL_ADMIN_PASSWORD
+
+  certificate_trust:
+    require_hostname_match: true
+    allow_temporary_ca_and_revocation_exception: true
+    allow_skip_cn_check: false
+
+  certificate_validation_mode: Strict
+
+  # Set false for a production release after valid WinRM certificates exist.
+  allow_temporary_certificate_exception: true
+
+security:
+  local_administrator:
+    name: fseadm
+    password_env: FACTORY_DEPLOYMENT_PASSWORD
+    lifecycle:
+      bootstrap_account: true
+      require_for_1_2b: true
+      allow_absent_in_1_2c: true
+      post_bootstrap_behavior: MayBeRemoved
+
+  powershell_remoting:
+    enabled: true
+
+  # Keep false for the already deployed NRFT reference cluster.
+  # Set true only for a new/pre-bootstrap deployment when validating
+  # the actual deployment password is authorized.
+  validate_credentials: false
+
+  # Security exceptions are intentionally not automated by the factory.
+  rdp:
+    enabled: true
+
+  firewall:
+    disable_all_profiles: false
+
+  ipv6:
+    disable: true
+    disabled_components: 255
+    disable_bindings: true
+    binding_component_id: ms_tcpip6
+    adapter_scope: RequiredDeploymentAdapters
+
+azure:
+  authentication:
+    method: DeviceCode
+    require_interactive_signin_for_stage_1_2: true
+    required_account_type: user
+
+  cloud: AzureUSGovernment
+  location: usgovvirginia
+  tenant_id: e3333e00-c877-4b87-b6ad-45e942de1750
+
+  endpoints_file: config/azure-endpoints/azure-us-government.yaml
+
+  arc_registration:
+    mode: ReadinessOnly
+    allow_registration: false
+    allow_device_code_registration: false
+    authentication_method: DeviceCode
+    require_interactive_user: true
+    required_account_type: user
+    require_connected_machine_agent: true
+    require_existing_cluster_block: true
+    require_existing_arc_registration_block: true
+    use_azure_cli_credentials_on_node: false
+    interactive_authentication_timeout_minutes: 10
+
+    # Factory-owned native Azure Local bootstrap session behavior.
+    native_bootstrap_status_poll_interval_seconds: 15
+    native_bootstrap_session_timeout_minutes: 15
+
+    # Bounded Azure Resource Manager validation after native bootstrap succeeds.
+    azure_resource_visibility_timeout_minutes: 10
+    azure_resource_visibility_poll_interval_seconds: 15
+
+    # Native registration must never silently expand into update or reboot actions.
+    allow_automatic_update: false
+    allow_automatic_reboot: false
+    require_explicit_approval_after_reboot: true
+
+    interactive_authentication_log_directory: "C:\\Build_log"
+    connected_machine_agent_command: azcmagent
+
+  connectivity_hosts:
+    - management.usgovcloudapi.net
+    - login.microsoftonline.us
+
+  providers:
+    - Microsoft.AzureStackHCI
+    - Microsoft.HybridCompute
+    - Microsoft.ResourceConnector
+    - Microsoft.ExtendedLocation
+
+runner_profiles:
+  AzureLocalExecution:
+    display_name: "Azure Local Execution Workstation"
+    execution_origin: Any
+    maximum_phase: 4
+    maximum_stage: 99
+    requires_hcn_connectivity: true
+    requires_azure_connectivity: true
+    allows_apply: true
+
+active_directory:
+  require_prebootstrap_workgroup_state: false
+  domain_fqdn: adds.navy.mil
+  srv_record: "_ldap._tcp.dc._msdcs.adds.navy.mil"
+
+  required_ports:
+    - 88
+    - 389
+    - 445
+    - 636
+
+module_baseline:
+  repository_order:
+    - PSGallery
+
+  required_modules:
+    - name: Az.Accounts
+    - name: Az.ConnectedMachine
+    - name: Az.Resources
+    - name: AzSHCI.ARCInstaller
+
+time_validation:
+  max_sync_age_minutes: 60
+  max_offset_seconds: 60
+
+logging:
+  node_log_directory: "C:\\Build_log"

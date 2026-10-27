@@ -1,0 +1,134 @@
+site_profile_authorizations:
+  cnef:
+    - PacStar451SingleServer
+
+profiles:
+  PacStar451SingleServer:
+    display_name: "PacStar 451 Single-Server Local Identity Profile"
+
+    overrides:
+      deployment:
+        single_server:
+          enabled: true
+          storage_intent: None
+          required_storage_network_count: 0
+
+      naming:
+        validation_mode: GeneralWindowsHost
+        allow_hyphenated_node_names: true
+
+      hardware:
+        manufacturer: PacStar
+        platform: "451"
+        baseline_file: config/hardware-baselines/pacstar-451-intel-i210.yaml
+
+        network_adapter:
+          expected_driver_pattern: "*Intel*"
+          minimum_link_speed_gbps: 1
+
+        converged_switch:
+          name: "ConvergedSwitch(compute_management)"
+          teaming_mode: SwitchIndependent
+          load_balancing_algorithm: HyperVPort
+          uplink_adapters:
+            - Port0
+            - Port1
+
+        management_vnic:
+          name: "vManagement(compute_management)"
+          vlan_mode: Untagged
+          vlan_id: 0
+
+        nic_mapping: {}
+
+        disabled_embedded_adapter_pattern: null
+
+        acceptable_disabled_adapter_statuses:
+          - Disabled
+          - Not Present
+
+        sriov:
+          required: false
+
+      network:
+        dhcp:
+          disable_on:
+            - "vManagement(compute_management)"
+
+        adapter_state:
+          required_enabled:
+            - "vManagement(compute_management)"
+
+          required_disabled_patterns: []
+
+        management:
+          primary_adapter: "vManagement(compute_management)"
+          vlan_mode: Untagged
+          vlan_id: 0
+
+        storage:
+          intent: None
+          networks: []
+          require_vlan_configuration: false
+          require_rdma: false
+          require_sriov: false
+
+      active_directory:
+        identity_mode: LocalIdentityWithKeyVault
+        require_prebootstrap_workgroup_state: true
+        domain_fqdn: null
+        srv_record: null
+        validation_domain_controller: null
+        required_ports: []
+
+      security:
+        validate_credentials: true
+
+        local_administrator:
+          lifecycle:
+            create_if_missing_for_1_2b: true
+            validate_password_for_1_2b: true
+            reset_existing_password: false
+
+        ipv6:
+          disable: false
+          disable_bindings: false
+
+      azure:
+        identity:
+          mode: LocalIdentityWithKeyVault
+          require_key_vault: true
+
+        arc_agent:
+          required: true
+          installation_mode: FactoryManaged
+          manifest_path: "protected/arc-agent-manifest.yaml"
+
+          agent_executable_path: "C:\\Program Files\\AzureConnectedMachineAgent\\azcmagent.exe"
+          himds_service_name: himds
+
+        arc_registration:
+          mode: InteractiveDeviceCode
+          allow_registration: true
+          allow_device_code_registration: true
+          authentication_method: DeviceCode
+          require_interactive_user: true
+          required_account_type: user
+          require_connected_machine_agent: true
+          require_existing_cluster_block: true
+          require_existing_arc_registration_block: true
+          use_azure_cli_credentials_on_node: false
+          interactive_authentication_timeout_minutes: 10
+
+          native_bootstrap_status_poll_interval_seconds: 15
+          native_bootstrap_session_timeout_minutes: 15
+
+          azure_resource_visibility_timeout_minutes: 10
+          azure_resource_visibility_poll_interval_seconds: 15
+
+          allow_automatic_update: false
+          allow_automatic_reboot: false
+          require_explicit_approval_after_reboot: true
+
+          interactive_authentication_log_directory: "C:\\Build_log"
+          connected_machine_agent_command: azcmagent

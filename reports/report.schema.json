@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "site",
+    "runId",
+    "status"
+  ],
+  "properties": {
+    "site": {
+      "type": "string"
+    },
+    "runId": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "RUNNING",
+        "BLOCKED",
+        "READY"
+      ]
+    }
+  }
+}

@@ -1,0 +1,173 @@
+# Azure Local Factory - Operator Variables Template
+#
+# Operators update approved site-specific information only.
+#
+# Do not add or change:
+# - workflow stages;
+# - adapter mappings;
+# - script paths;
+# - protected profile definitions;
+# - Azure cloud settings;
+# - credentials, secrets, tokens, certificates, or private keys;
+# - BIOS, firmware, boot, reimage, or media settings; or
+# - Phase 2, Phase 3, or Phase 4 execution controls.
+#
+# A requested site profile must be authorized by protected site-profiles.yaml.
+
+site:
+  name: "<SITE_CODE>"
+  display_name: "<SITE_CODE> Azure Local Site"
+  environment: production
+  location: usgovvirginia
+
+  # Example:
+  # profile: PacStar451SingleServer
+  #
+  # The merge process validates this requested value against immutable
+  # protected authorization data for the selected site.
+  profile: "<APPROVED_PROTECTED_PROFILE_NAME>"
+
+  topology:
+    phase1_node_count: 1
+    intent: Onboarding
+
+cluster:
+  name: "<APPROVED_CLUSTER_NAME>"
+
+azure:
+  subscription_id: "<APPROVED_SUBSCRIPTION_ID>"
+  tenant_id: "<APPROVED_TENANT_ID>"
+  resource_group: "<APPROVED_RESOURCE_GROUP>"
+  location: usgovvirginia
+  arc_agent:
+  installer:
+    source_type: ExecutionHostStagedMsi
+    execution_host_path: "C:\\Build_log\\AzureConnectedMachineAgent.msi"
+
+    expected_sha256: "8694ECD97E7887B5C7CC2A1541D15D2D2CB338BB39A16979BB6AF63BBA77B5D5"
+
+    expected_signer_subject: "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+
+    expected_signer_issuer: "CN=Microsoft Code Signing PCA 2011, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+
+    expected_signer_thumbprint: "F9A7CF9FBE13BAC767F4781061332DA6E8B4E0EE"
+
+    require_valid_authenticode_signature: true
+  arc_registration:
+    mode: InteractiveDeviceCode
+    allow_registration: true
+    allow_device_code_registration: true
+    authentication_method: DeviceCode
+    require_interactive_user: true
+    require_connected_machine_agent: true
+    require_existing_cluster_block: true
+    require_existing_arc_registration_block: true
+    use_azure_cli_credentials_on_node: false
+  # Required only when the selected protected profile uses Local Identity.
+  # Do not store Key Vault secrets, certificates, tokens, or passwords here.
+  #
+  # key_vault:
+  #   name: "<APPROVED_KEY_VAULT_NAME>"
+  #   resource_group: "<APPROVED_KEY_VAULT_RESOURCE_GROUP>"
+  #   resource_id: "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RESOURCE_GROUP>/providers/Microsoft.KeyVault/vaults/<VAULT_NAME>"
+
+network:
+  management:
+    subnet: "<MANAGEMENT_NETWORK_ADDRESS>/<PREFIX>"
+    prefix: <PREFIX>
+    gateway: "<MANAGEMENT_DEFAULT_GATEWAY>"
+    vlan_id: <MANAGEMENT_VLAN_ID>
+    primary_adapter: "<APPROVED_MANAGEMENT_ADAPTER>"
+
+  # Standard Dell AX/multi-node profiles normally require this section.
+  # An approved single-server profile can override storage intent and require
+  # an empty storage network collection.
+  storage:
+    networks:
+      - name: StorageNetwork1
+        adapter: Storage1
+        subnet: "<STORAGE_NETWORK_1_ADDRESS>/<STORAGE_PREFIX>"
+        prefix: <STORAGE_PREFIX>
+        vlan_id: <STORAGE_VLAN_1_ID>
+
+      - name: StorageNetwork2
+        adapter: Storage2
+        subnet: "<STORAGE_NETWORK_2_ADDRESS>/<STORAGE_PREFIX>"
+        prefix: <STORAGE_PREFIX>
+        vlan_id: <STORAGE_VLAN_2_ID>
+
+execution_hosts:
+  - id: "<SITE_CODE>-Automation-Host-01"
+    display_name: "<SITE_CODE> Approved Automation Host"
+    computer_name: "<APPROVED_EXECUTION_HOST_FQDN_OR_HOSTNAME>"
+    hosting_site: "<HOSTING_SITE_CODE>"
+
+    transport:
+      primary: WinRM-HTTPS
+      winrm_port: 5986
+      ssh_available: true
+
+    package_root: "C:\\Data\\azure-local-deployment"
+    artifacts_path: "\\\\<EXECUTION_HOSTNAME>\\AzureLocalFactoryArtifacts"
+
+    allowed_sites:
+      - "<SITE_CODE>"
+
+    require_matching_release_manifest: true
+    require_package_integrity_check: true
+
+nodes:
+  - name: "<NODE_01_NAME>"
+    node_number: "01"
+
+    bootstrap_connection:
+      host: "<APPROVED_BOOTSTRAP_WINRM_FQDN>"
+      protocol: WinRM-HTTPS
+      port: 5986
+
+    management:
+      ip: "<NODE_01_MANAGEMENT_IP>"
+      prefix: <PREFIX>
+      gateway: "<MANAGEMENT_DEFAULT_GATEWAY>"
+      dns_servers:
+        - "<DNS_SERVER_1>"
+        - "<DNS_SERVER_2>"
+      vlan_id: <MANAGEMENT_VLAN_ID>
+      adapter: "<MANAGEMENT_VNIC_OR_ADAPTER>"
+
+    network:
+      management_adapter: "<MANAGEMENT_VNIC_OR_ADAPTER>"
+      physical_adapters:
+        - "<PHYSICAL_ADAPTER_1>"
+        - "<PHYSICAL_ADAPTER_2>"
+      vlan_id: <MANAGEMENT_VLAN_ID>
+
+    storage:
+      - network: StorageNetwork1
+        adapter: Storage1
+        ip_address: "<NODE_01_STORAGE_1_IP>"
+        prefix: <STORAGE_PREFIX>
+        vlan_id: <STORAGE_VLAN_1_ID>
+
+      - network: StorageNetwork2
+        adapter: Storage2
+        ip_address: "<NODE_01_STORAGE_2_IP>"
+        prefix: <STORAGE_PREFIX>
+        vlan_id: <STORAGE_VLAN_2_ID>
+
+dns:
+  allowed_servers:
+    - "<PRIMARY_DNS_SERVER>"
+    - "<SECONDARY_DNS_SERVER>"
+
+  production_servers:
+    - "<PRIMARY_DNS_SERVER>"
+    - "<SECONDARY_DNS_SERVER>"
+
+ntp:
+  servers:
+    - "<PRIMARY_NTP_SERVER_FQDN>"
+
+active_directory:
+  require_prebootstrap_workgroup_state: true
+  validation_domain_controller: "<APPROVED_ADDS_DOMAIN_CONTROLLER_FQDN>"

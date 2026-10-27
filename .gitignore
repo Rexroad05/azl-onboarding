@@ -1,0 +1,6 @@
+artifacts/
+secure/
+*.iso
+*.vhd*
+*.log
+.env

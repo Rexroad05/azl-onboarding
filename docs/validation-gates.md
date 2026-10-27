@@ -1,0 +1,2 @@
+# Validation gates
+All operations in a stage must return Boolean Passed=true. Empty or missing operation implementations fail. Each attempt writes sanitized evidence. Attempts default to one. Failure stops; return_to_stage specifies where resume revalidates. No automatic destructive rollback. Certification requires current passes from stages 1–10. Validate mode is a read-only diagnostic mode and rejects mutations in the default onboarding sequence.

@@ -1,0 +1,114 @@
+adapters:
+  # ---------------------------------------------------------------------------
+  # Phase 1.1 — Input and build validation
+  # ---------------------------------------------------------------------------
+  Test-EnvironmentConfiguration: preflight/Test-EnvironmentConfiguration.ps1
+  Test-NamingConvention: preflight/Test-NamingConvention.ps1
+  Test-IPAddressAllocation: preflight/Test-IPAddressAllocation.ps1
+  Test-StorageNetworkConfiguration: preflight/Test-StorageNetworkConfiguration.ps1
+  Test-DnsConfiguration: preflight/Test-DnsConfiguration.ps1
+  Test-ActiveDirectoryConfiguration: preflight/Test-ActiveDirectoryConfiguration.ps1
+  Test-ExecutionHostConfiguration: preflight/Test-ExecutionHostConfiguration.ps1
+  Test-RequiredSecrets: preflight/Test-RequiredSecrets.ps1
+  Test-ReleasePackageIntegrity: preflight/Test-ReleasePackageIntegrity.ps1
+
+  # ---------------------------------------------------------------------------
+  # Phase 1.2 — HCN management-plane pre-bootstrap validation
+  # ---------------------------------------------------------------------------
+  Test-RemoteManagement: preflight/Test-RemoteManagement.ps1
+  Test-NodeIdentity: preflight/Test-NodeIdentity.ps1
+  Test-WinRMCertificateTrust: preflight/Test-WinRMCertificateTrust.ps1
+  Test-LocalAdministratorReadiness: preflight/Test-LocalAdministratorReadiness.ps1
+
+  Test-AzureLocalOS: bootstrap/os/Test-AzureLocalOS.ps1
+  Test-AzureLocalPolicyState: bootstrap/os/Test-AzureLocalPolicyState.ps1
+  Test-AzureLocalReadiness: preflight/Test-AzureLocalReadiness.ps1
+  Test-AzureLocalOfficialConnectivityValidation: preflight/Test-AzureLocalOfficialConnectivityValidation.ps1
+  Test-AzureLocalOfficialHardwareValidation: preflight/Test-AzureLocalOfficialHardwareValidation.ps1
+
+  Test-HardwareReadiness: preflight/Test-HardwareReadiness.ps1
+  Test-NICState: preflight/Test-NICState.ps1
+  Test-AdapterDesignState: preflight/Test-AdapterDesignState.ps1
+  Test-DhcpState: preflight/Test-DhcpState.ps1
+  Test-ManagementVlanState: preflight/Test-ManagementVlanState.ps1
+  Test-MellanoxDriverBaseline: preflight/Test-MellanoxDriverBaseline.ps1
+
+  Test-IPConfiguration: preflight/Test-IPConfiguration.ps1
+  Test-Gateway: preflight/Test-Gateway.ps1
+  Test-DNS: preflight/Test-DNS.ps1
+  Test-NTP: preflight/Test-NTP.ps1
+
+  Test-StorageNetworkReadiness: preflight/Test-StorageNetworkReadiness.ps1
+  Test-RdmaState: preflight/Test-RdmaState.ps1
+  Test-SriovState: preflight/Test-SriovState.ps1
+
+  Test-IPv6Baseline: preflight/Test-IPv6Baseline.ps1
+  Test-TpmReadiness: preflight/Test-TpmReadiness.ps1
+  Test-SecureBoot: preflight/Test-SecureBoot.ps1
+  Test-RequiredWindowsFeatures: preflight/Test-RequiredWindowsFeatures.ps1
+  Test-ActiveDirectoryReadiness: preflight/Test-ActiveDirectoryReadiness.ps1
+  Test-LocalAdministratorCredential: preflight/Test-LocalAdministratorCredential.ps1
+
+  # ---------------------------------------------------------------------------
+  # Phase 1.2 — HCN idempotent desired state
+  # ---------------------------------------------------------------------------
+  Test-AzureLocalDeploymentState: preflight/Test-AzureLocalDeploymentState.ps1
+  Ensure-NicRoleMapping: bootstrap/os/Ensure-NicRoleMapping.ps1
+  Ensure-EmbeddedAdaptersDisabled: bootstrap/os/Ensure-EmbeddedAdaptersDisabled.ps1
+  Ensure-DhcpDisabled: bootstrap/os/Ensure-DhcpDisabled.ps1
+  Ensure-ManagementVlan: bootstrap/os/Ensure-ManagementVlan.ps1
+  Ensure-ManagementNetwork: bootstrap/os/Ensure-ManagementNetwork.ps1
+  Ensure-DNS: bootstrap/os/Ensure-DNS.ps1
+  Ensure-NTP: bootstrap/os/Ensure-NTP.ps1
+  Ensure-StorageNetwork: bootstrap/os/Ensure-StorageNetwork.ps1
+  Ensure-IPv6Baseline: bootstrap/os/Ensure-IPv6Baseline.ps1
+  Ensure-LocalDeploymentAdministrator: bootstrap/os/Ensure-LocalDeploymentAdministrator.ps1
+  Ensure-PowerShellRemoting: bootstrap/os/Ensure-PowerShellRemoting.ps1
+  Ensure-HostName: bootstrap/os/Ensure-HostName.ps1
+  Get-AzureLocalDeploymentState: preflight/Get-AzureLocalDeploymentState.ps1
+  New-ValidationFindingsReport: reports/New-ValidationFindingsReport.ps1
+
+  # ---------------------------------------------------------------------------
+  # Phase 1.3 — Azure Local node bootstrap
+  # ---------------------------------------------------------------------------
+  Connect-Azure: azure/validation/Invoke-AzureStage3Validation.ps1
+  Test-Subscription: azure/validation/Invoke-AzureStage3Validation.ps1
+  Test-Permissions: azure/validation/Invoke-AzureStage3Validation.ps1
+  Test-ResourceProviders: azure/validation/Invoke-AzureStage3Validation.ps1
+  Test-ResourceGroup: azure/validation/Invoke-AzureStage3Validation.ps1
+
+  Test-AzureConnectivity: azure/validation/Test-AzureLocalNodeConnectivity.ps1
+  Test-AzureGovEndpoints: azure/validation/Test-AzureLocalNodeConnectivity.ps1
+
+  Invoke-AzureLocalNodeBootstrap: bootstrap/os/Invoke-AzureLocalNodeBootstrap.ps1
+  Test-AzureLocalNodeBootstrapState: bootstrap/os/Test-AzureLocalNodeBootstrapState.ps1
+  Test-LocalIdentityKeyVaultReadiness: azure/validation/Test-LocalIdentityKeyVaultReadiness.ps1
+  Install-RequiredModules: bootstrap/os/Install-RequiredModules.ps1
+  
+  # ---------------------------------------------------------------------------
+  # Phase 1.4 — Azure Arc machine registration and validation
+  # ---------------------------------------------------------------------------
+  Install-AzureConnectedMachineAgent: azure/registration/Install-AzureConnectedMachineAgent.ps1
+  Register-ArcNode: azure/registration/Register-ArcNode.ps1
+  Test-ArcRegistration: azure/registration/Test-ArcRegistration.ps1
+  Test-NodeHealth: validation/Test-NodeHealth.ps1
+  Test-ArcHealth: validation/Test-ArcHealth.ps1
+  Test-AzureRegistrationInputs: azure/registration/Test-AzureRegistrationInputs.ps1
+  Invoke-AzureLocalArcInitialization: azure/registration/Invoke-AzureLocalArcInitialization.ps1
+
+
+  # ---------------------------------------------------------------------------
+  # Phase 2.1 — Cluster deployment input validation
+  # ---------------------------------------------------------------------------
+  Test-ClusterDeploymentConfiguration: preflight/Test-ClusterDeploymentConfiguration.ps1
+  Test-ClusterDeploymentNaming: preflight/Test-ClusterDeploymentNaming.ps1
+  Test-ClusterDeploymentNetwork: preflight/Test-ClusterDeploymentNetwork.ps1
+  Test-ClusterDeploymentStorage: preflight/Test-ClusterDeploymentStorage.ps1
+  Test-ClusterDeploymentAzurePrerequisites: preflight/Test-ClusterDeploymentAzurePrerequisites.ps1
+  Test-ClusterDeploymentTemplateInputs: preflight/Test-ClusterDeploymentTemplateInputs.ps1
+  Test-ClusterDeploymentSafetyState: preflight/Test-ClusterDeploymentSafetyState.ps1
+
+  # ---------------------------------------------------------------------------
+  # Reporting
+  # ---------------------------------------------------------------------------
+  New-DeploymentReport: reports/New-DeploymentReport.ps1

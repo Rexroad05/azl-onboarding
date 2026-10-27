@@ -1,0 +1,2 @@
+# Field technician procedure
+Rack nodes; cable power, management NICs and iDRAC to the prepared external network; power on. Confirm DHCP or supplied iDRAC addressing and provide service tags. The controller must reach iDRAC and installation media. Physical network faults remain external remediation. Do not continue from an identity mismatch. Consult run evidence and correct the failed prerequisite before resume.

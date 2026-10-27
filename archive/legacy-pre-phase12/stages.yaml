@@ -1,0 +1,25 @@
+phase_1:
+  - id: 1
+    name: BuildScriptAndInputValidation
+    scope: site
+    mode: validate_only
+    requires_all_nodes_pass: false
+
+  - id: 2
+    name: PreBootstrapPreflightValidation
+    scope: node
+    mode: validate_only
+    requires_all_nodes_pass: true
+
+  - id: 3
+    name: AzureLocalBootstrapHCN
+    scope: node
+    mode: apply
+    requires_all_nodes_pass: true
+    requires_approval: true
+
+  - id: 4
+    name: AzureLocalValidation
+    scope: cluster
+    mode: validate_only
+    requires_all_nodes_pass: true

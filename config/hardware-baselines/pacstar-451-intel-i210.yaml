@@ -1,0 +1,30 @@
+hardware:
+  manufacturer: PacStar
+  platform: "451"
+
+  network_adapter:
+    expected_driver_pattern: "*Intel*"
+    minimum_link_speed_gbps: 1
+
+  converged_switch:
+    name: "ConvergedSwitch(compute_management)"
+    teaming_mode: SwitchIndependent
+    load_balancing_algorithm: HyperVPort
+    uplink_adapters:
+      - Port0
+      - Port1
+
+  management_vnic:
+    name: "vManagement(compute_management)"
+    vlan_mode: Untagged
+    vlan_id: 0
+
+  rdma:
+    required: false
+
+  sriov:
+    required: false
+
+  storage:
+    intent: None
+    required_network_count: 0

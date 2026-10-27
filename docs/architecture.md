@@ -1,0 +1,2 @@
+# Architecture
+GitHub Actions dispatches to an external self-hosted Windows controller. PowerShell owns discovery, stage execution and verification. A version-matched Microsoft ARM deployment template handles Azure Local deployment; optional Bicep handles supporting resources. Runtime state and evidence live in restricted durable controller storage. No controller VM on the new cluster is required for initial onboarding.

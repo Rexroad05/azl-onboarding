@@ -1,0 +1,1 @@
+State files live in artifacts/<site>/<runId> or an external durable controller path. Retain schemas here only. Keep the runtime directory on encrypted storage with restricted ACLs; GitHub caches are not the source of truth.

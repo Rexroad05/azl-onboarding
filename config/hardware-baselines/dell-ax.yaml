@@ -1,0 +1,4 @@
+status: requires-model-specific-baseline
+model: REPLACE
+firmware_bundle: REPLACE
+bios_attributes: {}

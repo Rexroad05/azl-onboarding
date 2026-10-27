@@ -1,0 +1,119 @@
+site:
+  name: NRFT
+  display_name: NRFT Azure Local Site
+  environment: production
+
+  topology:
+    phase1_node_count: 2
+    intent: Onboarding
+
+cluster:
+  name: NRFTAZCLUSTER01
+
+azure:
+  subscription_id: "6043a805-7d6a-47e3-bfbb-0debebe053a5"
+  resource_group: NRFTAZCLUSTER01-rg
+
+network:
+  management:
+    subnet: 192.168.69.192/26
+    prefix: 26
+    gateway: 192.168.69.193
+    vlan_id: 3578
+
+  storage:
+    networks:
+      - name: StorageNetwork1
+        adapter: Storage1
+        subnet: 10.71.1.0/24
+        prefix: 24
+        vlan_id: 711
+
+      - name: StorageNetwork2
+        adapter: Storage2
+        subnet: 10.71.2.0/24
+        prefix: 24
+        vlan_id: 712
+
+execution_hosts:
+  - id: NRFT-Automation-Host-01
+    display_name: "NRFT Approved Automation Host"
+    computer_name: "NAEANRFKNY01"
+    hosting_site: NRFK
+
+    transport:
+      primary: WinRM-HTTPS
+      winrm_port: 5986
+      ssh_available: true
+
+    package_root: "C:\\Data\\azure-local-deployment"
+    artifacts_path: "\\\\NAEANRFKNY01\\AzureLocalFactoryArtifacts"
+
+    allowed_sites:
+      - NRFT
+
+    require_matching_release_manifest: true
+    require_package_integrity_check: true
+
+nodes:
+  - name: NAEANRFTHCN01
+    node_number: "01"
+
+    management:
+      ip: 192.168.69.203
+      prefix: 26
+      gateway: 192.168.69.193
+      vlan_id: 3578
+      adapter: Management1
+
+    storage:
+      - network: StorageNetwork1
+        adapter: Storage1
+        ip: 10.71.1.1
+        prefix: 24
+        vlan_id: 711
+
+      - network: StorageNetwork2
+        adapter: Storage2
+        ip: 10.71.2.1
+        prefix: 24
+        vlan_id: 712
+
+  - name: NAEANRFTHCN02
+    node_number: "02"
+
+    management:
+      ip: 192.168.69.204
+      prefix: 26
+      gateway: 192.168.69.193
+      vlan_id: 3578
+      adapter: Management1
+
+    storage:
+      - network: StorageNetwork1
+        adapter: Storage1
+        ip: 10.71.1.2
+        prefix: 24
+        vlan_id: 711
+
+      - network: StorageNetwork2
+        adapter: Storage2
+        ip: 10.71.2.2
+        prefix: 24
+        vlan_id: 712
+
+dns:
+  allowed_servers:
+    - 140.23.3.41
+    - 140.22.3.52
+
+  production_servers:
+    - 192.168.69.222 
+
+ntp:
+  servers:
+    - NAEAAZPHDC01.adds.navy.mil
+
+active_directory:
+  validation_domain_controller: NAEAAZAHDC01.adds.navy.mil
+

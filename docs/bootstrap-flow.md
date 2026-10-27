@@ -1,0 +1,2 @@
+# Bootstrap sequence
+Provide reachable iDRAC using DHCP reservations or known addresses. Verify service tags, hardware baseline and firmware. A tested unattended install adapter mounts approved media, installs the OS, establishes management addressing and secure remoting. Resolve the temporary host endpoint and verify identity before final IP transition. Verify the final endpoint after reconnecting. Mounting ISO alone is not OS automation. The delivered default stage validates an existing OS; installation requires explicit adapter wiring.

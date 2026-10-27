@@ -1,0 +1,43 @@
+validation_profiles:
+  - id: 2
+    name: HcnDiscoveryReadiness
+    display_name: "1.2A HCN Discovery and Readiness Validation"
+    requires_adds_credentials: true
+    operations:
+      - Get-AzureLocalDeploymentState
+      - Test-RemoteManagement
+      - Test-WinRMCertificateTrust
+      - Test-NodeIdentity
+      - Test-AzureLocalOS
+      - Test-AzureLocalPolicyState
+      - Test-HardwareReadiness
+      - Test-NICState
+      - Test-MellanoxDriverBaseline
+      - Test-TpmReadiness
+      - Test-SecureBoot
+      - Test-RequiredWindowsFeatures
+      - Test-AzureLocalOfficialConnectivityValidation
+      - Test-AzureLocalOfficialHardwareValidation
+
+  - id: 4
+    name: HcnComplianceValidation
+    display_name: "1.2C HCN Compliance Validation"
+    requires_adds_credentials: true
+    operations:
+      - Test-LocalAdministratorReadiness
+      - Test-LocalAdministratorCredential
+      - Test-AdapterDesignState
+      - Test-DhcpState
+      - Test-ManagementVlanState
+      - Test-MellanoxDriverBaseline
+      - Test-IPConfiguration
+      - Test-DNS
+      - Test-NTP
+      - Test-StorageNetworkReadiness
+      - Test-RdmaState
+      - Test-SriovState
+      - Test-IPv6Baseline
+      - Test-ActiveDirectoryReadiness
+      - Test-TpmReadiness
+      - Test-SecureBoot
+      - Test-RequiredWindowsFeatures

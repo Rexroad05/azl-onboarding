@@ -1,0 +1,15 @@
+{
+  "status": "Package checks passed",
+  "checks": [
+    "Nine operation mappings resolve",
+    "Baseline is unapproved by default",
+    "Reboots disabled by default",
+    "Patch matches original Factory.psm1 once",
+    "Adapter routing precedes built-ins"
+  ],
+  "not_run": [
+    "PowerShell parser",
+    "Pester execution",
+    "Live Dell hardware validation"
+  ]
+}

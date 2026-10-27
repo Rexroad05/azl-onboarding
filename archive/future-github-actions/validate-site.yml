@@ -1,0 +1,36 @@
+name: validate-site
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        options: [site01, site02, site03]
+        default: site01
+      run_id:
+        description: Unique run ID (or existing run ID for resume)
+        required: true
+      resume:
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: factory-${{ inputs.environment }}
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: [self-hosted, Windows, azure-local-controller]
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run factory
+        shell: pwsh
+        env:
+          FACTORY_SITE: ${{ inputs.environment }}
+          FACTORY_RUN_ID: ${{ inputs.run_id }}
+          FACTORY_RESUME: ${{ inputs.resume }}
+          FACTORY_IDRAC_USER: ${{ secrets.FACTORY_IDRAC_USER }}
+          FACTORY_IDRAC_PASSWORD: ${{ secrets.FACTORY_IDRAC_PASSWORD }}
+        run: |
+          $resume = $env:FACTORY_RESUME -eq 'true'
+          ./controller/Invoke-AzureLocalFactory.ps1 -Environment "environments/$($env:FACTORY_SITE).yaml" -Mode Validate -ArtifactsPath D:/FactoryRuns -RunId $env:FACTORY_RUN_ID -Resume:$resume

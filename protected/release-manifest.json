@@ -1,0 +1,778 @@
+{
+  "releaseVersion": "1.0.4",
+  "generatedAtUtc": "2026-10-26T18:59:07.3184524Z",
+  "files": [
+    {
+      "path": ".gitignore",
+      "sha256": "A31FC2ABB7B4301C67CF1B57F214B752B6210E066FD27552A8A1CD3663D8B6F0"
+    },
+    {
+      "path": "azure/deployment/Get-AzureLocalOfficialTemplate.ps1",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "azure/deployment/Invoke-AzureLocalClusterDeployment.ps1",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "azure/deployment/Invoke-AzureLocalClusterDeploymentValidation.ps1",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "azure/deployment/main.bicep",
+      "sha256": "870977C50F86EFDBF3ECF9C0BACAFD76BD93B1988EF791CAF3C4B9A317702B12"
+    },
+    {
+      "path": "azure/deployment/main.bicepparam",
+      "sha256": "75C57455B897F59385847F645C7CE5CCDB0FB3B3DEC998CE393CD3AED0007F13"
+    },
+    {
+      "path": "azure/deployment/New-AzureLocalClusterDeploymentParameters.ps1",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "azure/deployment/Test-AzureLocalClusterDeploymentPlan.ps1",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "azure/deployment/Test-AzureLocalClusterDeploymentState.ps1",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "azure/deployment/Wait-AzureLocalClusterDeployment.ps1",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "azure/preparation/Connect-Azure.ps1",
+      "sha256": "C94B9B41218B6BFED21974A8331F759A8B31265259B0C8D8CDCE06A51E743974"
+    },
+    {
+      "path": "azure/preparation/Test-Permissions.ps1",
+      "sha256": "17D2BBA98B68FE879AEC678CD60D0611A03DB251F0D75AEEA094FE06F0C9031B"
+    },
+    {
+      "path": "azure/preparation/Test-ResourceGroup.ps1",
+      "sha256": "672C14C1B406664EA3E8D7228EDD5F4B078EC35FC5E412870A3EA9381E44AC21"
+    },
+    {
+      "path": "azure/preparation/Test-ResourceProviders.ps1",
+      "sha256": "784D68437DD04195C1BB5CD7B3F5534B2FDC5FC38E133008233E188692FF33E7"
+    },
+    {
+      "path": "azure/preparation/Test-Subscription.ps1",
+      "sha256": "3A49423DF9116BF13275DEC3617562AEDCA6DC7744219385C7132CAC7553D64A"
+    },
+    {
+      "path": "azure/registration/Install-AzureConnectedMachineAgent.ps1",
+      "sha256": "6FDD83F4BF1C6DA6B41681DB4CF19148B7A9C0C41064DF6833B4B9D87A79FB96"
+    },
+    {
+      "path": "azure/registration/Invoke-AzureLocalArcInitialization.ps1",
+      "sha256": "EB228393FFEFC5ED851B11DD173DBFC904612387063041CECCF788DE94271EB4"
+    },
+    {
+      "path": "azure/registration/Register-ArcNode.ps1",
+      "sha256": "B510B8B28344B063B7951DFE3DBFC8FDA682977E8FC2EBF2D65DCAAA034AEE3A"
+    },
+    {
+      "path": "azure/registration/Test-ArcRegistration.ps1",
+      "sha256": "0C14E5A67572097FABA9CDFED61DD497D6783CF650D180B8D758F8BB9C80BCFD"
+    },
+    {
+      "path": "azure/registration/Test-AzureRegistrationInputs.ps1",
+      "sha256": "AAD733CD07EBC6F3A23082F38ADA9FBE1184E76BB4A84F34A9EFFEDE56CCC37C"
+    },
+    {
+      "path": "azure/validation/Invoke-AzureStage3Validation.ps1",
+      "sha256": "ED04798A170D8161FEFC6F2B778156309C78852FF7932553C7A2E9CCF87CF7E0"
+    },
+    {
+      "path": "azure/validation/Test-ArcHealth.ps1",
+      "sha256": "8B39F6C00834F7A365787E53D389A9A480944A48A49FE5C7B200228D48830090"
+    },
+    {
+      "path": "azure/validation/Test-AzureLocalNodeConnectivity.ps1",
+      "sha256": "21B6264719599F1E41368453801D92F88B5B1C7EEB3B7090CA34DC63E8BE2395"
+    },
+    {
+      "path": "azure/validation/Test-LocalIdentityKeyVaultReadiness.ps1",
+      "sha256": "5DE9731C289E167BF6F84211499B6881C0B7B4B2B97524E61F4F763B469CEB7F"
+    },
+    {
+      "path": "azure/validation/Test-NodeHealth.ps1",
+      "sha256": "3FCF08E12EC048FAE7EDAAF48E4B64699C47E0AF7720D9FDA4FE6DC598FD3BA7"
+    },
+    {
+      "path": "bootstrap/os/Ensure-DhcpDisabled.ps1",
+      "sha256": "97DBA8165D84846CBE9CD55C68AD948D4CFB3410F12248B2DD8D29B48B0E3B07"
+    },
+    {
+      "path": "bootstrap/os/Ensure-DNS.ps1",
+      "sha256": "6ED40677BFCDBC8925A74403967C90D68BB2EFA51D1738451A186B4B4B59DC36"
+    },
+    {
+      "path": "bootstrap/os/Ensure-EmbeddedAdaptersDisabled.ps1",
+      "sha256": "D1A4E5B295F9F64F95354A45BDA29DA855E4BA2C2F853930006779B3C5B09121"
+    },
+    {
+      "path": "bootstrap/os/Ensure-HostName.ps1",
+      "sha256": "3B3348E27B4C6A90D852E2B3473FAECDEDB97D781186AD5F72FEDB7E91DBB881"
+    },
+    {
+      "path": "bootstrap/os/Ensure-IPv6Baseline.ps1",
+      "sha256": "15D0CFABD3B7B3DF46CC4E2AC81F716134FA50287933ABB4EEAA59DA31A2D92B"
+    },
+    {
+      "path": "bootstrap/os/Ensure-LocalDeploymentAdministrator.ps1",
+      "sha256": "9AE63463DFE5AB8FF4957BDB8D323D3A19944D7A6E9B3D2FBCA18EE60DE5C988"
+    },
+    {
+      "path": "bootstrap/os/Ensure-ManagementNetwork.ps1",
+      "sha256": "8F88B68E380C036A7BC6572A032049976AB41225D451AB1109C85CDC2904A4EB"
+    },
+    {
+      "path": "bootstrap/os/Ensure-ManagementVlan.ps1",
+      "sha256": "8B5BE13A7F5897F20724CAEECDD2F8B4027680FF5E0BA0855D7968E3B718959D"
+    },
+    {
+      "path": "bootstrap/os/Ensure-NicRoleMapping.ps1",
+      "sha256": "F0D30627E3BEBF272A67FCA0918FE36DEC3C2812EBE56778339839BCC42E7E9F"
+    },
+    {
+      "path": "bootstrap/os/Ensure-NTP.ps1",
+      "sha256": "B2ADF33E551E13222FF145AB5563B4DBFA497C402FE43A60E3888678758E5C65"
+    },
+    {
+      "path": "bootstrap/os/Ensure-PowerShellRemoting.ps1",
+      "sha256": "24B4C6B66FB3B0AB61D2681EDBB0E67BF97728E53A2DD648B2711D6486AAEAF4"
+    },
+    {
+      "path": "bootstrap/os/Ensure-StorageNetwork.ps1",
+      "sha256": "3FDD7796861DB0F7B7E3E6298D6233BE71005832FB1DADDD0260DE1350BEB637"
+    },
+    {
+      "path": "bootstrap/os/HcnEnsure.Common.psm1",
+      "sha256": "3042DBB0D56E1DB42F474744B7AE0BEF334EDF919CAA649AD7978D30E7BA1962"
+    },
+    {
+      "path": "bootstrap/os/Invoke-AzureLocalNodeBootstrap.ps1",
+      "sha256": "75E8AB34D94CCFDEFE967B75AB563CAD14449541575220204FFCF0D6E281E81B"
+    },
+    {
+      "path": "bootstrap/os/Test-AzureLocalNodeBootstrapState.ps1",
+      "sha256": "A421A62EEF44979A9A7FFD295D234E719616702C54F9D8650F765751E7D52A99"
+    },
+    {
+      "path": "bootstrap/os/Test-AzureLocalOS.ps1",
+      "sha256": "4BCAA884755930484F5C20E1B6078C73CBA80AB12CA045C821D9805113B1FDB4"
+    },
+    {
+      "path": "bootstrap/os/Test-AzureLocalPolicyState.ps1",
+      "sha256": "A8ECDAB788385330DB3C578CBB3F053857C6D5369060442165FBF60BAB21C5E2"
+    },
+    {
+      "path": "config/azure-endpoints/azure-us-government.yaml",
+      "sha256": "AFBDD47690F64401F5BABAA19A5BB5F6474B85FDD1A0D49C6BDD6A0F67172F44"
+    },
+    {
+      "path": "config/hardware-baselines/dell-ax.yaml",
+      "sha256": "0D6839F61D5879628CAFDE6CE97FEB03E05BC7F739B228C14017650196ADD108"
+    },
+    {
+      "path": "config/hardware-baselines/pacstar-451-intel-i210.yaml",
+      "sha256": "F0AB2F4C4D0482F8DEB8C793CA4D0FE453CDE0A2276AF17D52EF449722416C95"
+    },
+    {
+      "path": "controller/Factory.psm1",
+      "sha256": "F46B540ABE6DAE29082CEBB3620C9848D00A240BEFCA535D33FF74BBC8925377"
+    },
+    {
+      "path": "controller/Invoke-AzureLocalFactory.ps1",
+      "sha256": "398A0C46009DD2BC46195692D7D53E712D290DE753F27090F67FBD0AE183EC7C"
+    },
+    {
+      "path": "controller/Invoke-NodeRebootAndReconnect.ps1",
+      "sha256": "AB92ED255F6FC80629B9F107247DAE12B3FBE7EF7033E49CA2AC714FF2D11F4D"
+    },
+    {
+      "path": "controller/Invoke-Phase.ps1",
+      "sha256": "611BE17979C68809F6FC1ADEB37558ABB41EA88C4CA7478B990E6B8750E8FE6F"
+    },
+    {
+      "path": "controller/Invoke-ReadOnlyValidation.ps1",
+      "sha256": "06934FF14B6053656A5D4B8E9DDC6F148688FC8F522313BEC7782EF12235B95A"
+    },
+    {
+      "path": "controller/Invoke-Stage.ps1",
+      "sha256": "E8C22D0FE8AE7A94D778ABEADD642F8333939E91FB42E2B72ACDF2C4C4AACD13"
+    },
+    {
+      "path": "controller/Invoke-ValidationGate.ps1",
+      "sha256": "3A1C8DB963250908D852B42FCE67AA103B0217C7A0E7D9A2054B82096799B832"
+    },
+    {
+      "path": "docs/adapter-contract.md",
+      "sha256": "C8E6C6F7F201FC484CB35176083BB91A95107AB2E2508CB74531899A5CA01FE9"
+    },
+    {
+      "path": "docs/architecture.md",
+      "sha256": "05EF821B08BD7B68F351ACF89A7FEBB1FA1295D8017AB18153A811EE76B9AD1B"
+    },
+    {
+      "path": "docs/automation-workstation-prerequisites.md",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "docs/bootstrap-flow.md",
+      "sha256": "10D62DE3A0A1D15714153C5959608237EC3B5B1F78AD30B1432BE6FAB56B456F"
+    },
+    {
+      "path": "docs/bootstrap-local-remoting.md",
+      "sha256": "1A6F8207BB4818D2264EFA6B7522344F0D71443B1EFAECEA56090091739B4C80"
+    },
+    {
+      "path": "docs/failure-catalog.md",
+      "sha256": "A413F03A080676EC9A4C62D72465EE27CAAFCEFD5C2C67D283120FC5CA2A76A1"
+    },
+    {
+      "path": "docs/field-tech-procedure.md",
+      "sha256": "B938C7DAC0B772273F34C0376B9E824F60C82320F1CE5CE7B4B7D65CA49F8ABA"
+    },
+    {
+      "path": "docs/github-actions.md",
+      "sha256": "E84F1D86A0400604C4FC747FC60B33A911E6770A8545ADBCB2E03D5FDE223F95"
+    },
+    {
+      "path": "docs/images/Azure-Local-Onboarding-Workflow-Phase1.png",
+      "sha256": "00BE518DB576454EB0D6C227157CA5B85A278E41B76A5DA45A1941EC79BD0B61"
+    },
+    {
+      "path": "docs/nrft-network-inputs.md",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "docs/operator-guide.md",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "docs/phase-1-failure-catalog.md",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "docs/phase-1-runbook.md",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "docs/phase-lifecycle.md",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "docs/phase1_readme.md",
+      "sha256": "878977A667D568E14CB39C51C723558519E7CD1DD691F22CABD92578A5F9C468"
+    },
+    {
+      "path": "docs/REPOSITORY-LAYOUT.md",
+      "sha256": "824FF1E4301241AE23FA3A912DC2A895E115883827A83DE0A4FCB21EA13E19D4"
+    },
+    {
+      "path": "docs/validation-gates.md",
+      "sha256": "ADF1B2F302DF2FCE4CCABDAB60D96D420D5A73297DEA339DE4C59E58E1AC2719"
+    },
+    {
+      "path": "docs/verification/hardware-package-original.json",
+      "sha256": "CDA56D1C284F7559D0710CE3B8902B56F1445F6BBED5D9920027DCE3D21E3D7B"
+    },
+    {
+      "path": "FILE-MANIFEST.md",
+      "sha256": "B32BA7B6533DF7036120F9B8E23AD3C693EA6B2805B7967D90137D12191D73CB"
+    },
+    {
+      "path": "IMPLEMENTATION-STATUS.md",
+      "sha256": "ABDE9A27045CC723A62F1F6B031C4C87CC1AEE1F284971B351206A31992A322D"
+    },
+    {
+      "path": "launcher/Get-DeploymentManagerStatus.ps1",
+      "sha256": "4D15DA84FA20E02B92575CAA9ABA1EA8695A3FBC3887317C9E4A070B3DE2202D"
+    },
+    {
+      "path": "launcher/Initialize-AzureGovernmentSession.ps1",
+      "sha256": "E0084AD6AE732335170E3E4BBB20121B8F4A4236274B311B0B476D6CCB01B43A"
+    },
+    {
+      "path": "launcher/Initialize-OperatorSession.ps1",
+      "sha256": "90A77183571808B8B4CFAE98F38A07576BA219AEBCED085D4AE477DE27B10FD9"
+    },
+    {
+      "path": "launcher/Merge-FactoryConfiguration.ps1",
+      "sha256": "D61FC2B352FBAD7369E0DE7E9DF3EED5DD0993A93F25537C8A9A29151EA22BE5"
+    },
+    {
+      "path": "launcher/Set-DeploymentApproval.ps1",
+      "sha256": "EA0B47532FB74685DC730C647CB741EA96BA30B182A17C809027E595346AC4EE"
+    },
+    {
+      "path": "launcher/Start-AzureLocalDeploymentManager.ps1",
+      "sha256": "A83ADA870E87B010D04C84E14589C80ED2AE3046EEE4E11314D093373C954EFB"
+    },
+    {
+      "path": "launcher/Start-ReadOnlyValidation.ps1",
+      "sha256": "92E6460001EDBD3C4E49C5EADDFB28F86CCC035C91C78227D5BC8FB9D575E320"
+    },
+    {
+      "path": "launcher/Test-OperatorWorkstation.ps1",
+      "sha256": "DCF5583EB4068F6634523C6AA92A6355C03F588205D195A920177CEA91D4E3B0"
+    },
+    {
+      "path": "preflight/ClusterDeployment.Common.psm1",
+      "sha256": "E7A9CB3DCA9169A6B5CE3018B96ECE03929E7E112DF16414946CD4F42C832DA7"
+    },
+    {
+      "path": "preflight/Get-AzureLocalDeploymentState.ps1",
+      "sha256": "0F2EB7495254E74AA251F2BCC590269BBAC7059CAC3A8E40091F99709703ADB6"
+    },
+    {
+      "path": "preflight/ManagementPlane.Common.psm1",
+      "sha256": "DEE50DC8C97D7C269D9468C4480EAE94E9AB8A00D98AB37E190DEA20E57B038E"
+    },
+    {
+      "path": "preflight/Test-ActiveDirectoryConfiguration.ps1",
+      "sha256": "181177F1DC4AF6684FBC8855BBC5152412E667BE4656F09165A199F82BCE2D6C"
+    },
+    {
+      "path": "preflight/Test-ActiveDirectoryReadiness.ps1",
+      "sha256": "170B0AB2D56C0F354E41D0AD0F6E17C1EEEFB4DBEB9F27851076FC766630B848"
+    },
+    {
+      "path": "preflight/Test-AdapterDesignState.ps1",
+      "sha256": "7662ABB59C0B89225381AACDCC23974AC180D1034AA747FAC8EB2BE917B3433A"
+    },
+    {
+      "path": "preflight/Test-AzureConnectivity.ps1",
+      "sha256": "5DCEEE516947E4DA82903352A073198043C666C25EE101C2FEA81CCC5F3088C3"
+    },
+    {
+      "path": "preflight/Test-AzureGovEndpoints.ps1",
+      "sha256": "B33E05B69E3103EC9381D85C94A2609BC0A3248B9E381EEC02B11E136BDE115C"
+    },
+    {
+      "path": "preflight/Test-AzureLocalDeploymentState.ps1",
+      "sha256": "20840264CE56605870B804536707B5D72B4B0834C20EB0ED1E3B3EDD682B6CB5"
+    },
+    {
+      "path": "preflight/Test-AzureLocalOfficialConnectivityValidation.ps1",
+      "sha256": "6F2BFCA0A8CF4C69C5099EF12F5FC2D6E2DF59E1831936B9F49F990465A4F203"
+    },
+    {
+      "path": "preflight/Test-AzureLocalOfficialHardwareValidation.ps1",
+      "sha256": "9CCD1E32F1444D00234CF8F58692D1EE51521AF236EE04CF4103A292DF8BBDB0"
+    },
+    {
+      "path": "preflight/Test-AzureLocalReadiness.ps1",
+      "sha256": "4D98163FEF22226640DC04451E70F8737E4604EDA09A7ACA518DAAFE0F8B906C"
+    },
+    {
+      "path": "preflight/Test-ClusterDeploymentAzurePrerequisites.ps1",
+      "sha256": "2995C6E51C087F9ABA2D45B504CAFD4AF946A7CAE47554CA1ABBC4168CE76677"
+    },
+    {
+      "path": "preflight/Test-ClusterDeploymentConfiguration.ps1",
+      "sha256": "32CAD6C3A25AF88B92309EF8050FBB0AB871058FB90A2F86DCEC8571C10CFFE3"
+    },
+    {
+      "path": "preflight/Test-ClusterDeploymentNaming.ps1",
+      "sha256": "97516981F9D2CFB5AA636F7C1FFD608A85246EE2ACE99D5922D829871B45DCB0"
+    },
+    {
+      "path": "preflight/Test-ClusterDeploymentNetwork.ps1",
+      "sha256": "7469FE509441AB01C62CBDC23CAEF0C829EF0AC16D7B4B3724E44C21A2DED440"
+    },
+    {
+      "path": "preflight/Test-ClusterDeploymentSafetyState.ps1",
+      "sha256": "8F8A575ECC4A6329BECB28FFFC11019390CFB27BC6E875ADAF16969879DA5672"
+    },
+    {
+      "path": "preflight/Test-ClusterDeploymentStorage.ps1",
+      "sha256": "071E9E2B6459C6BC0E50CBA8FA9230449E4A98D18FA2A9CA9ADC15D999B9F970"
+    },
+    {
+      "path": "preflight/Test-ClusterDeploymentTemplateInputs.ps1",
+      "sha256": "CDA8EA7BAC5E80A26E8EC53F3185337B9D4E050179EAB5A0C751BAAF49A48800"
+    },
+    {
+      "path": "preflight/Test-DhcpState.ps1",
+      "sha256": "06A48D32DBC415C63930AB80D6E9C4EEBA3F0BA68472D3F635478E48209F97D0"
+    },
+    {
+      "path": "preflight/Test-DNS.ps1",
+      "sha256": "AC948F07BEF54A0BDB534A1C3A2AD0AF5A02FB8D9292B7EC652C1106EED95539"
+    },
+    {
+      "path": "preflight/Test-DnsConfiguration.ps1",
+      "sha256": "022F61408E61E092225DAA595E8B7CB0BE2046D21CE486E559DB4B2F4A97801D"
+    },
+    {
+      "path": "preflight/Test-EnvironmentConfiguration.ps1",
+      "sha256": "8244D9E089791EE6BBE7DA5237E7E90069EC4007CA6F83C21F57D6B55A14BDED"
+    },
+    {
+      "path": "preflight/Test-ExecutionHostConfiguration.ps1",
+      "sha256": "0AF067C51896935147DB2EB7AEF84F8256326C65D63AB2D4931A453F08E6EE76"
+    },
+    {
+      "path": "preflight/Test-Gateway.ps1",
+      "sha256": "508FA0C2632515314721C6DBBE84FF5025C3C4C3AD7CAC1F307EBA65BEC63808"
+    },
+    {
+      "path": "preflight/Test-HardwareReadiness.ps1",
+      "sha256": "E14C194EA4FC416F50E8AA97990867933EB50CE0FE850E17B5F9A265904551B4"
+    },
+    {
+      "path": "preflight/Test-IPAddressAllocation.ps1",
+      "sha256": "22BD2405CF3FB7766D5F7D38D56B925174E9F4619C2E91BA461B91BAB45B5797"
+    },
+    {
+      "path": "preflight/Test-IPConfiguration.ps1",
+      "sha256": "1FB25EAB2D25578DE737F477BBDC605D446A6B9E37AC2FA8238DBB7FD1253248"
+    },
+    {
+      "path": "preflight/Test-IPv6Baseline.ps1",
+      "sha256": "11B4DFD74EEFE2E25B50317B79DFABE536BB31FA40AF9D28D6E0800D742DC33C"
+    },
+    {
+      "path": "preflight/Test-LocalAdministratorCredential.ps1",
+      "sha256": "EACBBBE9666E24FB696B2FF7368B599412E6026356581B7CEB72A88B5C88A4D8"
+    },
+    {
+      "path": "preflight/Test-LocalAdministratorReadiness.ps1",
+      "sha256": "41D5649FE2580A3564837D49562D543BA3B13129A0E897F80ECC05CD623795BA"
+    },
+    {
+      "path": "preflight/Test-ManagementVlanState.ps1",
+      "sha256": "429AB419924C4E01D651841C45D2F1B09FC32DF12D21BFCBB563FD5EF593B7CC"
+    },
+    {
+      "path": "preflight/Test-MellanoxDriverBaseline.ps1",
+      "sha256": "A24ACDF24B0C3462F5F7950E0CEEFFC43F2599D8EA41FDBF457F2990A987BD60"
+    },
+    {
+      "path": "preflight/Test-NamingConvention.ps1",
+      "sha256": "68D1FD7A04D65698FBF55831FE79B21A257A27307217C0F6B1E1A5FDDE32FA22"
+    },
+    {
+      "path": "preflight/Test-NICState.ps1",
+      "sha256": "935222BE4D874C7A45073CFE717229FDFF08187CC8A408852BE7C7B056C69408"
+    },
+    {
+      "path": "preflight/Test-NodeIdentity.ps1",
+      "sha256": "3BC0A87862CC56EFFA89405DD20B5794A6EE32E3AFB790BACBF1DEBEB04A870E"
+    },
+    {
+      "path": "preflight/Test-NTP.ps1",
+      "sha256": "E4E2909B3687E5024944A6947F72E2243295AD197FDD6B3582B803E4916CB352"
+    },
+    {
+      "path": "preflight/Test-RdmaState.ps1",
+      "sha256": "ED4D84200210891E1CFC1EDD1D98162199114B84D371215BB1826C320AB382E6"
+    },
+    {
+      "path": "preflight/Test-ReleasePackageIntegrity.ps1",
+      "sha256": "FCAA8229453DDA2A0AFA8E7CFC69D2AAB46EDACFF7FD7B3CEA9EA69FBAB0C6AC"
+    },
+    {
+      "path": "preflight/Test-RemoteManagement.ps1",
+      "sha256": "4FC152A6C72A3F8C34AF3586402D665506AF002C4AA8E11E2CAA3452ACC2023D"
+    },
+    {
+      "path": "preflight/Test-RequiredSecrets.ps1",
+      "sha256": "6518B6273411CEEFE924A2AA4772D3444A0A31295D484981300620BFD5EB6F10"
+    },
+    {
+      "path": "preflight/Test-RequiredWindowsFeatures.ps1",
+      "sha256": "155BB105E446174AF86CA5A58E00F318E216D4E740986AF460F9F7940A7F9ED3"
+    },
+    {
+      "path": "preflight/Test-SecureBoot.ps1",
+      "sha256": "7CEA1FBA80E6C1B923AA0F414778C74A25827F1761D3E6FB0459C7DC9E21A199"
+    },
+    {
+      "path": "preflight/Test-SriovState.ps1",
+      "sha256": "308B848341712464BD11B23A3E1E6EE541B57E6FF6D2C8C00438BC5DB5F4A176"
+    },
+    {
+      "path": "preflight/Test-StorageNetworkConfiguration.ps1",
+      "sha256": "D532058A172682A3AA439749D913480ED61587ADBC4E2E5E5ED5EC20A34E93D1"
+    },
+    {
+      "path": "preflight/Test-StorageNetworkReadiness.ps1",
+      "sha256": "1AB1EC3418A9F1265E242CE742CE32D5C7FD43BE42EA98A77086492113F08DA8"
+    },
+    {
+      "path": "preflight/Test-TpmReadiness.ps1",
+      "sha256": "172F393890BFDBB1DFE3FAA38921FB7D38A122704433595BDF24B5FB230732EB"
+    },
+    {
+      "path": "preflight/Test-WinRMCertificateTrust.ps1",
+      "sha256": "FA99825FE4F25972E88939C303F698ECDD3B6EEF5B55BD5C1EA910643B85EBAB"
+    },
+    {
+      "path": "protected/adapters.yaml",
+      "sha256": "1522B512CC4EB0E5D73E6117C90A3C0D42D0C0F04E3483C17AFE1B8712934F15"
+    },
+    {
+      "path": "protected/arc-agent-manifest.yaml",
+      "sha256": "58CFFA0BAC871D8EFE7D347EE9CD77607CF5EF3CAB998CDA816D7D8E36E5FB21"
+    },
+    {
+      "path": "protected/defaults.yaml",
+      "sha256": "07AFB5FD6F27EF157251071969CA98E3F67A56866BAF911E2AFCF18A3DF2312D"
+    },
+    {
+      "path": "protected/phase-manifest.yaml",
+      "sha256": "6B6C5400D4BAC1EFE58E805F2062D9E4CAD5B5DCF83C3F4CC383E7F77DAEA087"
+    },
+    {
+      "path": "protected/read-only-validation-manifest.yaml",
+      "sha256": "3B16B31BACF72480D31132C6B1DE0C6550C3A56ABE179C720CCC9CD03C9F073A"
+    },
+    {
+      "path": "protected/release-version.json",
+      "sha256": "CBB4987C261C0D16AE7507742C478DD2B48B3A7CA64CDB4E14BE7556C670B1C7"
+    },
+    {
+      "path": "protected/site-profiles.yaml",
+      "sha256": "00B5F32BC1EC8FE041580AECFE7B207D9502E991BBEB8045E21D7B54E765FD99"
+    },
+    {
+      "path": "README.md",
+      "sha256": "A618FD9B63C1BA06831637FDB8FBCDA16AC0706DA3B48CF2597853BC8F1BE9BB"
+    },
+    {
+      "path": "remediation/Repair-ArcRegistration.ps1",
+      "sha256": "B726CFDA5E4FEB0ABB646158C92A55D1181FE10C04A5ACF486E51501D4C6F333"
+    },
+    {
+      "path": "remediation/Repair-AzureLocalDeployment.ps1",
+      "sha256": "96EA86A74E85685EF1674352282E4FCE731C80B30C2A0B7BD7AB536F38622CD0"
+    },
+    {
+      "path": "remediation/Repair-AzureLocalServices.ps1",
+      "sha256": "A8C1406C3CBAD5C038EFF96F70B113FF389CCC232A4886AF7EFC504C1B49C285"
+    },
+    {
+      "path": "remediation/Repair-AzurePreparation.ps1",
+      "sha256": "C6C38489B0297D73C3AB7FAD8047E7ED6FA132B4E746275DEAD05BF41569A50F"
+    },
+    {
+      "path": "remediation/Repair-Discovery.ps1",
+      "sha256": "573AC2FDADB098BB47B9B0E87FB0D6A976A54837ECA2B346D781FD9698091A7E"
+    },
+    {
+      "path": "remediation/Repair-HardwareBaseline.ps1",
+      "sha256": "0C10CBC88E25111110D93ADC0C45BD472084928BEFD1BD34399686AC85E0FC56"
+    },
+    {
+      "path": "remediation/Repair-HCNConfiguration.ps1",
+      "sha256": "185AA4DD1949C42A3F6034DB4732B4801A395255E20D14868D163B5E67B2004C"
+    },
+    {
+      "path": "remediation/Repair-Preflight.ps1",
+      "sha256": "BC892063A75096152D734BDB303B0859ED6FC9C1DA29830A5046E762404AB490"
+    },
+    {
+      "path": "reports/deployment-report-template.html",
+      "sha256": "20A78C58A2950CDFF10E418599B361407C39AE9811D611B004ADF9AE21F30FFE"
+    },
+    {
+      "path": "reports/New-DeploymentReport.ps1",
+      "sha256": "82ACB2C56F45595304061F9326CA59DC260964099E2FF7A34E983588DC3851A6"
+    },
+    {
+      "path": "reports/New-ValidationFindingsReport.ps1",
+      "sha256": "9A23C3128D473358070163BF14A821CA780E03A9C37A7795C3D3572E703FB2A2"
+    },
+    {
+      "path": "reports/report.schema.json",
+      "sha256": "92CA85DFF39D201CCBBD5354801796D5B68AD2A8DD7BCC4CC7B2286494F26B75"
+    },
+    {
+      "path": "Run-AzureLocalDeploymentManager.cmd",
+      "sha256": "F8638C84C8E5AE7962149F37F84C3C750B4D7A999F9DD6F24F4048AAF4DC4BBE"
+    },
+    {
+      "path": "state/README.md",
+      "sha256": "DF69348147EC3AC5D7DA36C27595D07675B418436D66C3DF0369083EE02175E5"
+    },
+    {
+      "path": "state/state.schema.json",
+      "sha256": "C6DBC54D55D575D19060110CA37AEB963FC0565CC44ACB6EA73B90AF7F10990B"
+    },
+    {
+      "path": "tests/unit/ArcAgentInstaller.Tests.ps1",
+      "sha256": "3CF3BB78A45AC4424A204B2E303BFB8C3ED89D3332F6A9BA7EF281BBC0A0882A"
+    },
+    {
+      "path": "tests/unit/ArcAgentStage14.Tests.ps1",
+      "sha256": "18625CD43D9A2B06B30082429E9085A6678B8F770C7B383C7B47AED499139748"
+    },
+    {
+      "path": "tests/unit/ArcRegistrationBehavior.Tests.ps1",
+      "sha256": "9C79924E40BFE4688BB3290693EA2F4EC09B52BFBB708E9217350A9CC0663050"
+    },
+    {
+      "path": "tests/unit/Batch2BBehavior.Tests.ps1",
+      "sha256": "FC2F1BC0462255835001B7110352824E81DC0804C9D5A2988F3FD95EDA469BF0"
+    },
+    {
+      "path": "tests/unit/BootstrapLocalAdministrator.Tests.ps1",
+      "sha256": "2FF6D22586A867375891D15F66D49DB9A6F47C64982B1E243B9269492342CC99"
+    },
+    {
+      "path": "tests/unit/ClusterDeploymentBehavior.Tests.ps1",
+      "sha256": "1A23CEE7F016278DC855EA1E073B75E0F625AEC2DC6BA103B86F48F1E787E463"
+    },
+    {
+      "path": "tests/unit/CnefNamingConvention.Tests.ps1",
+      "sha256": "29890FBA3D9195CD72BB0FB660C8ABA147FDDE07D75BF39C0503C80009201F98"
+    },
+    {
+      "path": "tests/unit/CnefSingleServerStage1.Tests.ps1",
+      "sha256": "8283EC10434FB775001C93E2784CF1D43D687825B58F112108E9EBA863FA5266"
+    },
+    {
+      "path": "tests/unit/CnefStage12ApplySafety.Tests.ps1",
+      "sha256": "91E377CF1215BEF8B9F53EB62A562C45855105EA4BB6DF6B58AE24D1820A3094"
+    },
+    {
+      "path": "tests/unit/EnvironmentConfiguration.Tests.ps1",
+      "sha256": "726ADCD4068F95BA564008A825E967D263E64F0BC4C9403264035DBE4727860D"
+    },
+    {
+      "path": "tests/unit/IPAddressAllocation.Tests.ps1",
+      "sha256": "38F9DB16406C39DAC798C306CB660576F203A4F41913CBF5F3B54055544C6D3D"
+    },
+    {
+      "path": "tests/unit/LegacyWorkflowCoverage.Tests.ps1",
+      "sha256": "AA2EAC49323293ECEFFA0E2CBE95A188B62FC4113F67FEE97081D469098CC62A"
+    },
+    {
+      "path": "tests/unit/LocalAdministratorLifecycle.Tests.ps1",
+      "sha256": "76EBAFBC69F5D4B1E9FC4865ED2B3C5FC3B8052FA806EFF4C460075FE4FA7DEF"
+    },
+    {
+      "path": "tests/unit/LocalIdentityKeyVaultReadiness.Tests.ps1",
+      "sha256": "B89C3B91CDA2FA01F7B5C69E22886E9CB5F3C4C7366ED8D18A9BA4C062E06BC0"
+    },
+    {
+      "path": "tests/unit/lockedApprovalResult.Tests.ps1",
+      "sha256": "D7AEBAD957A1842B94BB7C3F5EAC4602A43848F1AB3E29DBC0C3F9DEE14FE6F9"
+    },
+    {
+      "path": "tests/unit/ManagementPlaneBootstrap.Tests.ps1",
+      "sha256": "A512B5974EF754FCF140A41E5EF410AC0C42792037738A48F985DB90B8017051"
+    },
+    {
+      "path": "tests/unit/NamingConvention.Tests.ps1",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "tests/unit/NRFTReadOnlyRegression.Tests.ps1",
+      "sha256": "C1281048DF933F484E3BEC29084B2250A771CDD549DB7E7A1704DF544980BB2A"
+    },
+    {
+      "path": "tests/unit/OfficialHardwareValidationResultHandling.Tests.ps1",
+      "sha256": "2CDB0F6A48449981B4288F77E807153ABB5E68130D05A1FBFEF5795C06AFA1D0"
+    },
+    {
+      "path": "tests/unit/Phase13Bootstrap.Tests.ps1",
+      "sha256": "263E1220F2985DC1B665B9788B2F5B0993B8FB1B50A42A65C6E698FC4925E9DC"
+    },
+    {
+      "path": "tests/unit/Phase14ArcRegistration.Tests.ps1",
+      "sha256": "669DA3B7EA105D4720A9704DB7D4CC57BCE3B39DFFCE9D69BF894428FA76004D"
+    },
+    {
+      "path": "tests/unit/Phase21ClusterDeployment.Tests.ps1",
+      "sha256": "F0C93B034B260AF6F729E05240C8B192D522DB5EF26700B071A7AEFD2E3045CA"
+    },
+    {
+      "path": "tests/unit/ReadOnlyValidationProfiles.Tests.ps1",
+      "sha256": "2556CA632829FEF01AC0A2B75A27DAA6816B69827F2268D5279AC98D9FE35D35"
+    },
+    {
+      "path": "tests/unit/RebootBehavior.Tests.ps1",
+      "sha256": "DBE0CAE67BDD6A9E8932C63B349169EF8DFDB321C145CAA374D7F9C787481A74"
+    },
+    {
+      "path": "tests/unit/Stage13AzureAdapterMappings.Tests.ps1",
+      "sha256": "A268E6F10F7C52168ABB4D810D8BD7446E051D9CE35FAF41B2FD55EEE0D83EB7"
+    },
+    {
+      "path": "tests/unit/StageTargetedExecution.Tests.ps1",
+      "sha256": "C9812211DB297296431C573EC6C816B438FD4330C9AB5E8CF9DFA5E96A710B2A"
+    },
+    {
+      "path": "tests/unit/TemporaryCertificateExceptionWorkflow.Tests.ps1",
+      "sha256": "FA5E24239AA0EF9C712916D6A2AE60F012C0E39832C327A558257AFCB77BB705"
+    },
+    {
+      "path": "tests/unit/TestHelpers.ps1",
+      "sha256": "D99E0646D09578E3748D8982D1FEE1962533F202E33986322D99D4F29D9B280D"
+    },
+    {
+      "path": "tests/unit/ValidationFindingsReport.Tests.ps1",
+      "sha256": "36BD3B579A7C9D4AD10E5251FE060F87D053171C5F1ECB27D8895A4C78E62C0A"
+    },
+    {
+      "path": "tests/unit/WorkflowRegression.Tests.ps1",
+      "sha256": "1750C49D83FD478B05FF1021BE6B115A9D718ED1841FD31C78CAFFB58F0EA855"
+    },
+    {
+      "path": "tools/Invoke-LegacyWorkflowCleanup.ps1",
+      "sha256": "D748B5021BBA30960189BA51806F49F8C1B222F08AEBB285F11EDF3129C2E1B3"
+    },
+    {
+      "path": "tools/New-ReleaseManifest.ps1",
+      "sha256": "3392FE5DF0F135ACF4BD1D76849C5422E484795477104071A909887C6307779C"
+    },
+    {
+      "path": "tools/Test-Batch2BApprovalEngineReadiness.ps1",
+      "sha256": "CE1DFA39CA71FB5F9591D95177EBAC38B92ECED7869EB56803756988B83FCB55"
+    },
+    {
+      "path": "tools/Test-NRFTReadOnlyRegression.ps1",
+      "sha256": "9EECB2CA399CC8C19F0C4F4145479CACA2211BC6C02FD5AA3E6C23809A7F5237"
+    },
+    {
+      "path": "tools/Test-Phase12AdapterReadiness.ps1",
+      "sha256": "5FE12316D7273595EC1D77B628BC6852BCBC534AB8DA72C329B795390AC32C0D"
+    },
+    {
+      "path": "validation/Test-ArcHealth.ps1",
+      "sha256": "9C09F481528FD97F23344BDA1E314D50B9B240A7A31755EB78D7DB4983B18E8C"
+    },
+    {
+      "path": "validation/Test-ClusterHealth.ps1",
+      "sha256": "91D85ABB82AC5B1CC13C7118016B2B520171A0F571B5A3B4FB360B422518C451"
+    },
+    {
+      "path": "validation/Test-ControlPlaneHealth.ps1",
+      "sha256": "30B9CDCDBFF583E8702C26A5623CB081D311E160ECE6411FAA5DD76A1BC1C1DB"
+    },
+    {
+      "path": "validation/Test-CustomLocationHealth.ps1",
+      "sha256": "DF8701789C33E1852AEED2B0C12EF588C8B657CC7FDE3D5D7B468590175A58EF"
+    },
+    {
+      "path": "validation/Test-NodeHealth.ps1",
+      "sha256": "5F7F33C7A2A3AA38C2A525D41DCD6B938EE5009F7BAFDD919CC33065B3EAEAA0"
+    },
+    {
+      "path": "validation/Test-ResourceBridgeHealth.ps1",
+      "sha256": "A4AF72299379A931D536ECB98ED9B63D61F482BEB56C5D4762D06883F1B80077"
+    },
+    {
+      "path": "validation/Test-StorageHealth.ps1",
+      "sha256": "BC178CB24EEA7837D61B45E3CDE4E96DE15D2FF86EC4F9F7DF3A65A6C54CF610"
+    }
+  ]
+}

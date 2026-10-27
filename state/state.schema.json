@@ -1,0 +1,288 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Azure Local Factory Phase Package Deployment State",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "site",
+    "cluster",
+    "runId",
+    "configHash",
+    "mode",
+    "status",
+    "currentPhase",
+    "currentStage",
+    "phases",
+    "stages",
+    "nodes"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string"
+    },
+    "site": {
+      "type": "string"
+    },
+    "cluster": {
+      "type": "string"
+    },
+    "runId": {
+      "type": "string"
+    },
+    "configHash": {
+      "type": "string"
+    },
+    "mode": {
+      "enum": [
+        "Plan",
+        "Validate",
+        "Apply"
+      ]
+    },
+    "status": {
+      "enum": [
+        "RUNNING",
+        "PLAN_COMPLETE",
+        "VALIDATED",
+        "REPORTING",
+        "BLOCKED",
+        "PAUSED",
+        "APPROVED",
+        "DENIED",
+        "READY"
+      ]
+    },
+    "currentPhase": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "currentStage": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "returnToPhase": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "returnToStage": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "returnToOperation": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Focused operation to resume after an approved or interactive workflow pause.",
+      "default": null
+    },
+    "startedAt": {
+      "type": "string"
+    },
+    "completedAt": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "phases": {
+      "type": "object"
+    },
+    "stages": {
+      "type": "object"
+    },
+    "nodes": {
+      "type": "object"
+    },
+    "operationCheckpoints": {
+      "type": "object",
+      "description": "Operation-level PASS, SKIPPED, PAUSED, and failure-safe resume evidence keyed by phase/stage.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "default": {}
+    },
+    "approvedOperations": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "default": {}
+    },
+    "pendingApproval": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Configuration change, reboot, or interactive authentication action awaiting operator action.",
+      "additionalProperties": true,
+      "default": null
+    },
+    "pendingReboot": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Approved configuration change requiring a separately approved reboot and reconnect.",
+      "properties": {
+        "ApprovalKey": {
+          "type": "string"
+        },
+        "ApprovalType": {
+          "type": "string",
+          "enum": [
+            "Reboot"
+          ]
+        },
+        "PhaseId": {
+          "type": "integer"
+        },
+        "StageId": {
+          "type": "integer"
+        },
+        "Operation": {
+          "type": "string"
+        },
+        "Node": {
+          "type": "string"
+        },
+        "Reason": {
+          "type": "string"
+        },
+        "ReconnectTarget": {
+          "type": "string"
+        },
+        "ReturnToOperation": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "NativeBootstrapRebootPending": {
+          "type": "boolean"
+        },
+        "RequestedAt": {
+          "type": "string"
+        },
+        "Status": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "default": null
+    },
+    "pendingInteractiveAuthentication": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Interactive device-code authentication or native bootstrap session awaiting completion by an authorized user.",
+      "properties": {
+        "ApprovalKey": {
+          "type": "string"
+        },
+        "ApprovalType": {
+          "type": "string",
+          "enum": [
+            "InteractiveAuthentication"
+          ]
+        },
+        "AuthenticationMethod": {
+          "type": "string",
+          "enum": [
+            "DeviceCode"
+          ]
+        },
+        "PhaseId": {
+          "type": "integer"
+        },
+        "StageId": {
+          "type": "integer"
+        },
+        "Operation": {
+          "type": "string"
+        },
+        "Node": {
+          "type": "string"
+        },
+        "Workflow": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "BootstrapStatus": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "BootstrapConfigPath": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "StatusRecordPath": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "LastCheckedAtUtc": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "SessionStartedAtUtc": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ReturnToOperation": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Reason": {
+          "type": "string"
+        },
+        "LogPath": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ProcessId": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "ReconnectTarget": {
+          "type": "string"
+        },
+        "RequestedAt": {
+          "type": "string"
+        },
+        "Status": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "default": null
+    }
+  }
+}

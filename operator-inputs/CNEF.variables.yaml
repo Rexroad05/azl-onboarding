@@ -1,0 +1,111 @@
+# Azure Local Factory - Operator Variables
+# CNEF | PacStar 451 | Single-Server Azure Local Profile
+#
+# Requested Phase 1 scope:
+#   1.1 Input and Build Validation
+#   1.2B Ensure HCN Desired State
+#   1.3 Azure Local Node Bootstrap Readiness
+#
+# Action 4 remains available for read-only validation before and after
+# onboarding actions.
+#
+# No credentials, passwords, tokens, certificates, keys, or Key Vault
+# secrets are stored in this file.
+
+site:
+  name: cnef
+  display_name: "CNEF Azure Local Site"
+  environment: production
+  location: usgovvirginia
+
+  # Requested profile is validated against protected authorization data.
+  # Operators cannot define hardware requirements inside this file.
+  profile: PacStar451SingleServer
+
+  topology:
+    phase1_node_count: 1
+    intent: Onboarding
+
+cluster:
+  name: azl-cnef-c1
+
+azure:
+  subscription_id: "71ebe315-bfc7-429a-af34-bf481888bb55"
+  tenant_id: "595725a5-b937-4d70-9dcb-43a72bf889d6"
+  location: usgovvirginia
+  resource_group: rg-necc-poc-va-01
+  
+  key_vault:
+    name: kv-necc-poc
+    resource_group: rg-necc-poc-va-01
+    resource_id: "/subscriptions/71ebe315-bfc7-429a-af34-bf481888bb55/resourceGroups/rg-necc-poc-va-01/providers/Microsoft.KeyVault/vaults/kv-necc-poc"
+
+network:
+  management:
+    subnet: "192.168.1.0/24"
+    prefix: 24
+    gateway: "192.168.1.1"
+    vlan_id: 0
+    primary_adapter: "vManagement(compute_management)"
+
+execution_hosts:
+  - id: cnef-Automation-Host-01
+    display_name: "CNEF Approved Automation Host"
+    computer_name: vm-necc-poc-va-
+    hosting_site: cnef
+
+    transport:
+      primary: WinRM-HTTPS
+      winrm_port: 5986
+      ssh_available: true
+
+    package_root: "C:\\Data\\azure-local-deployment"
+    artifacts_path: "\\\\vm-necc-poc-va-\\AzureLocalFactoryArtifacts"
+
+    allowed_sites:
+      - cnef
+
+    require_matching_release_manifest: true
+    require_package_integrity_check: true
+
+nodes:
+  - name: azl-cnef-n1
+    node_number: "01"
+
+    bootstrap_connection:
+      host: AZL-CNEF-N1
+      protocol: WinRM-HTTPS
+      port: 5986
+
+    management:
+      ip: "192.168.1.189"
+      prefix: 24
+      gateway: "192.168.1.1"
+      dns_servers:
+        - "192.168.1.178"
+      vlan_id: 0
+      adapter: "vManagement(compute_management)"
+
+    network:
+      management_adapter: "vManagement(compute_management)"
+      physical_adapters:
+        - Port0
+        - Port1
+      vlan_id: 0
+
+    # Protected PacStar profile declares storage intent None.
+    storage: []
+
+dns:
+  allowed_servers:
+    - "192.168.1.178"
+
+  production_servers:
+    - "192.168.1.178"
+
+ntp:
+  servers:
+    - ntp-d.nist.gov
+
+active_directory:
+  require_prebootstrap_workgroup_state: true
