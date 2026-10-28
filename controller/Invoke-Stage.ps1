@@ -908,15 +908,22 @@ foreach ($operation in $operations) {
 
             $statusLabel = switch ($outcome) {
                 'AlreadyCompliant' { 'SKIPPED' }
-                'Skipped' { 'SKIPPED' }
-                'Changed' { 'CHANGED' }
-                default { 'PASSED' }
+                'Skipped'          { 'SKIPPED' }
+                'Changed'          { 'CHANGED' }
+                default            { 'PASSED' }
+            }
+
+            $statusColor = switch ($outcome) {
+                'AlreadyCompliant' { 'White' }
+                'Skipped'          { 'White' }
+                'Changed'          { 'DarkYellow' }
+                default            { 'Green' }
             }
 
             Write-Host (
                 "[$([datetime]::Now.ToString('HH:mm:ss'))] " +
                 "Site | $operation | $statusLabel | $($operationResult.Summary)"
-            ) -ForegroundColor Green
+            ) -ForegroundColor $statusColor
         }
         catch {
             $failure = [pscustomobject]@{
@@ -932,6 +939,11 @@ foreach ($operation in $operations) {
             }
 
             $Context.LastResults.Add($failure)
+
+            Write-Host (
+                "[$([datetime]::Now.ToString('HH:mm:ss'))] " +
+                "Site | $operation | FAILED | $($failure.Reason)"
+            ) -ForegroundColor Red
 
             throw $failure.Reason
         }
@@ -1080,16 +1092,23 @@ foreach ($operation in $operations) {
 
             $statusLabel = switch ($outcome) {
                 'AlreadyCompliant' { 'SKIPPED' }
-                'Skipped' { 'SKIPPED' }
-                'Changed' { 'CHANGED' }
-                default { 'PASSED' }
+                'Skipped'          { 'SKIPPED' }
+                'Changed'          { 'CHANGED' }
+                default            { 'PASSED' }
+            }
+
+            $statusColor = switch ($outcome) {
+                'AlreadyCompliant' { 'White' }
+                'Skipped'          { 'White' }
+                'Changed'          { 'DarkYellow' }
+                default            { 'Green' }
             }
 
             Write-Host (
                 "[$([datetime]::Now.ToString('HH:mm:ss'))] " +
                 "$nodeName | $operation | $statusLabel | " +
                 "$($operationResult.Summary)"
-            ) -ForegroundColor Green
+            ) -ForegroundColor $statusColor
         }
         catch {
             $reason = Protect-FactoryErrorMessage `
@@ -1115,6 +1134,11 @@ foreach ($operation in $operations) {
             }
 
             $Context.LastResults.Add($failure)
+
+            Write-Host (
+                "[$([datetime]::Now.ToString('HH:mm:ss'))] " +
+                "$nodeName | $operation | FAILED | $reason"
+            ) -ForegroundColor Red
 
             $escapedOperation = [regex]::Escape($operation)
 

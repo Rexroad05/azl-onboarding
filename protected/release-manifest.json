@@ -1,6 +1,6 @@
 {
   "releaseVersion": "1.0.4",
-  "generatedAtUtc": "2026-10-27T18:01:43.3022776Z",
+  "generatedAtUtc": "2026-10-28T17:02:40.4493379Z",
   "files": [
     {
       "path": ".gitignore",
@@ -64,19 +64,19 @@
     },
     {
       "path": "azure/registration/Install-AzureConnectedMachineAgent.ps1",
-      "sha256": "6FDD83F4BF1C6DA6B41681DB4CF19148B7A9C0C41064DF6833B4B9D87A79FB96"
+      "sha256": "D2D6DEE64711466673B21EF6E2B944C4294796D838570F9632E98FADB1C6F33C"
     },
     {
       "path": "azure/registration/Invoke-AzureLocalArcInitialization.ps1",
-      "sha256": "9572CD4F86A075EACEAD15F67AECA181264C5CB6C36BE7FEE68B9BA343C4A06B"
+      "sha256": "18BCD43CE52870F599638C62B62720CB37E747797DB004984284BE5DBCB91E89"
     },
     {
       "path": "azure/registration/Register-ArcNode.ps1",
-      "sha256": "BA2D7C179958ED39AB6817B403C39D805DA4A839D4A32922BC826C04730E67B5"
+      "sha256": "0715A371B85A75C5CC7B82DEE2C862051CA250B039E8E1C11F0CABDAAC0C1E68"
     },
     {
       "path": "azure/registration/Test-ArcRegistration.ps1",
-      "sha256": "9A702BDCB38C432283760B54F6E372E139C2AE50D5F18C327100DCDD6880C80E"
+      "sha256": "6C6994E8D7938F19D116B2F52D70F622FF2063F4AFD3879BC181313D5D5B9B9F"
     },
     {
       "path": "azure/registration/Test-AzureRegistrationInputs.ps1",
@@ -124,7 +124,7 @@
     },
     {
       "path": "bootstrap/os/Ensure-LocalDeploymentAdministrator.ps1",
-      "sha256": "9AE63463DFE5AB8FF4957BDB8D323D3A19944D7A6E9B3D2FBCA18EE60DE5C988"
+      "sha256": "3B8AC5BEF52F3254AAE9A38CB56A3637EFBF639880B6263F25A42B020727DCDA"
     },
     {
       "path": "bootstrap/os/Ensure-ManagementNetwork.ps1",
@@ -204,7 +204,7 @@
     },
     {
       "path": "controller/Invoke-Stage.ps1",
-      "sha256": "425B9388923A52180B7D998981E5B17D74305C7F4CEDD6C4D95634BD9980D0C7"
+      "sha256": "CD4F5100F276DFBBE8AFF6303804A4EE607A0775DEB69BA54237DD4E555DA30E"
     },
     {
       "path": "controller/Invoke-ValidationGate.ps1",
@@ -616,7 +616,7 @@
     },
     {
       "path": "tests/unit/ArcRegistrationBehavior.Tests.ps1",
-      "sha256": "DC722DF2106132E98912C284815490F3350976D34F823ADC3CC57E57FB419AB4"
+      "sha256": "AA62BD177A17CCD9F498DC2ADA48A4F3B4ABE0E35DAF378A7B8D4A4F6063ECCC"
     },
     {
       "path": "tests/unit/Batch2BBehavior.Tests.ps1",

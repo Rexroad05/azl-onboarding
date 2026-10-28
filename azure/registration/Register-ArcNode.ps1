@@ -991,7 +991,104 @@ function New-NativeBootstrapSuccessResult {
         }
 }
 
-function Invoke-NativeBootstrapSession {
+function Write-NativeBootstrapProgress {
+    param(
+        [Parameter(Mandatory)]
+        [string]$NodeName,
+
+        [Parameter(Mandatory)]
+        [object]$BootstrapStatus
+    )
+
+    $steps = @(
+        Get-ObjectValue `
+            -Object $BootstrapStatus `
+            -Name 'DetailedResponse'
+    )
+
+    $terminalStatuses = @(
+        'Succeeded'
+        'NotApplicable'
+        'Failed'
+        'RebootPending'
+    )
+
+    $stepCount = $steps.Count
+
+    $completedStepCount = @(
+        $steps |
+            Where-Object {
+                $_.Status -in $terminalStatuses
+            }
+    ).Count
+
+    $percentComplete = if ($stepCount -gt 0) {
+        [math]::Floor(
+            ($completedStepCount / $stepCount) * 100
+        )
+    }
+    else {
+        0
+    }
+
+    $bootstrapStatusName = [string](
+        Get-ObjectValue `
+            -Object $BootstrapStatus `
+            -Name 'Status'
+    )
+
+    if (
+        $bootstrapStatusName -eq 'InProgress' -and
+        $percentComplete -ge 100
+    ) {
+        $percentComplete = 99
+    }
+
+    $keySteps = @(
+        $steps |
+            Where-Object {
+                $_.Name -in @(
+                    'ConnectivityValidation'
+                    'ArcRegistration'
+                    'ArcExtensionInstall'
+                )
+            }
+    )
+
+    if ($keySteps.Count -eq 0) {
+        $keySteps = $steps
+    }
+
+    $summary = @(
+        $keySteps |
+            ForEach-Object {
+                "$($_.Name)=$($_.Status)"
+            }
+    ) -join '; '
+
+    $signature = @(
+        $steps |
+            Sort-Object Name |
+            ForEach-Object {
+                "$($_.Name)=$($_.Status)"
+            }
+    ) -join '|'
+
+    Write-Progress `
+        -Id 42 `
+        -Activity "Native Azure Local Arc Bootstrap - $NodeName" `
+        -Status $summary `
+        -PercentComplete $percentComplete
+
+    return [pscustomobject]@{
+        Signature = $signature
+        Summary = $summary
+        PercentComplete = $percentComplete
+        StepCount = $stepCount
+        CompletedStepCount = $completedStepCount
+    }
+}
+Invoke-NativeBootstrapSession {
     param(
         [Parameter(Mandatory)]
         [hashtable]$Context,
@@ -1021,136 +1118,160 @@ function Invoke-NativeBootstrapSession {
 
     $bootstrapStatus = $InitialBootstrapStatus
     $lastStatus = $null
+    $lastProgressSignature = $null
     $lastDeviceCodeFingerprint = $null
 
-    while ($true) {
-        $statusRecordPath = Write-NativeBootstrapStatusRecord `
-            -Context $Context `
-            -NodeName $NodeName `
-            -BootstrapStatus $bootstrapStatus `
-            -ExistingPath $StatusRecordPath
-
-        $nativeStatus = [string](
-            Get-ObjectValue `
-                -Object $bootstrapStatus `
-                -Name 'Status'
-        )
-
-        $nativeError = [string](
-            Get-ObjectValue `
-                -Object $bootstrapStatus `
-                -Name 'ErrorMessage'
-        )
-
-        $rebootPending = [bool](
-            Get-ObjectValue `
-                -Object $bootstrapStatus `
-                -Name 'RebootPending'
-        )
-
-        if ([string]::IsNullOrWhiteSpace($nativeStatus)) {
-            $nativeStatus = 'Unknown'
-        }
-
-        if ($nativeStatus -ne $lastStatus) {
-            Write-Host (
-                "[$([datetime]::Now.ToString('HH:mm:ss'))] " +
-                "Native Arc bootstrap status for ${NodeName}: $nativeStatus"
-            ) -ForegroundColor Cyan
-
-            $lastStatus = $nativeStatus
-        }
-
-        $deviceCode = Get-ObjectValue `
-            -Object $bootstrapStatus `
-            -Name 'DeviceCode'
-
-        $deviceCodeFingerprint = $null
-
-        if ($null -ne $deviceCode) {
-            $deviceCodeFingerprint = (
-                "$(
-                    Get-ObjectValue `
-                        -Object $deviceCode `
-                        -Name 'VerificationUri'
-                )|$(
-                    Get-ObjectValue `
-                        -Object $deviceCode `
-                        -Name 'UserCode'
-                )|$(
-                    Get-ObjectValue `
-                        -Object $deviceCode `
-                        -Name 'ExpiresOn'
-                )"
-            )
-        }
-
-        if (
-            -not [string]::IsNullOrWhiteSpace($deviceCodeFingerprint) -and
-            $deviceCodeFingerprint -ne $lastDeviceCodeFingerprint
-        ) {
-            [void](
-                Write-NativeBootstrapDeviceCode `
-                    -BootstrapStatus $bootstrapStatus
-            )
-
-            $lastDeviceCodeFingerprint = $deviceCodeFingerprint
-        }
-
-        if ($rebootPending) {
-            return New-NativeBootstrapPauseResult `
+    try {
+        while ($true) {
+            $statusRecordPath = Write-NativeBootstrapStatusRecord `
+                -Context $Context `
                 -NodeName $NodeName `
                 -BootstrapStatus $bootstrapStatus `
-                -BootstrapConfigPath $BootstrapConfigPath `
-                -StatusRecordPath $statusRecordPath `
-                -PauseType 'Reboot' `
-                -Changed $true
-        }
+                -ExistingPath $StatusRecordPath
 
-        if ($nativeStatus -eq 'Succeeded') {
-            Remove-NativeBootstrapConfiguration `
-                -Context $Context `
-                -BootstrapConfigPath $BootstrapConfigPath
+            $nativeStatus = [string](
+                Get-ObjectValue `
+                    -Object $bootstrapStatus `
+                    -Name 'Status'
+            )
 
-            return New-NativeBootstrapSuccessResult `
+            $nativeError = [string](
+                Get-ObjectValue `
+                    -Object $bootstrapStatus `
+                    -Name 'ErrorMessage'
+            )
+
+            $rebootPending = [bool](
+                Get-ObjectValue `
+                    -Object $bootstrapStatus `
+                    -Name 'RebootPending'
+            )
+
+            if ([string]::IsNullOrWhiteSpace($nativeStatus)) {
+                $nativeStatus = 'Unknown'
+            }
+
+            if ($nativeStatus -ne $lastStatus) {
+                Write-Host (
+                    "[$([datetime]::Now.ToString('HH:mm:ss'))] " +
+                    "Native Arc bootstrap status for ${NodeName}: $nativeStatus"
+                ) -ForegroundColor Cyan
+
+                $lastStatus = $nativeStatus
+            }
+
+            $progress = Write-NativeBootstrapProgress `
                 -NodeName $NodeName `
-                -StatusRecordPath $statusRecordPath
-        }
+                -BootstrapStatus $bootstrapStatus
 
-        if ($nativeStatus -eq 'Failed') {
-            Remove-NativeBootstrapConfiguration `
-                -Context $Context `
-                -BootstrapConfigPath $BootstrapConfigPath
+            if ($progress.Signature -ne $lastProgressSignature) {
+                Write-Host (
+                    "[$([datetime]::Now.ToString('HH:mm:ss'))] " +
+                    "$NodeName | NativeBootstrap | " +
+                    "$($progress.PercentComplete)% | " +
+                    "$($progress.Summary)"
+                ) -ForegroundColor Cyan
 
-            if ([string]::IsNullOrWhiteSpace($nativeError)) {
-                $nativeError = (
-                    'Native bootstrap returned Failed without an error message.'
+                $lastProgressSignature = $progress.Signature
+            }
+
+            $deviceCode = Get-ObjectValue `
+                -Object $bootstrapStatus `
+                -Name 'DeviceCode'
+
+            $deviceCodeFingerprint = $null
+
+            if ($null -ne $deviceCode) {
+                $deviceCodeFingerprint = (
+                    "$(
+                        Get-ObjectValue `
+                            -Object $deviceCode `
+                            -Name 'VerificationUri'
+                    )|$(
+                        Get-ObjectValue `
+                            -Object $deviceCode `
+                            -Name 'UserCode'
+                    )|$(
+                        Get-ObjectValue `
+                            -Object $deviceCode `
+                            -Name 'ExpiresOn'
+                    )"
                 )
             }
 
-            throw (
-                "Native Azure Local Arc bootstrap failed for node $NodeName. " +
-                "Error: $nativeError. Review $statusRecordPath and use " +
-                'Collect-ArcBootstrapSupportLogs if directed by support.'
-            )
+            if (
+                -not [string]::IsNullOrWhiteSpace($deviceCodeFingerprint) -and
+                $deviceCodeFingerprint -ne $lastDeviceCodeFingerprint
+            ) {
+                [void](
+                    Write-NativeBootstrapDeviceCode `
+                        -BootstrapStatus $bootstrapStatus
+                )
+
+                $lastDeviceCodeFingerprint = $deviceCodeFingerprint
+            }
+
+            if ($rebootPending) {
+                return New-NativeBootstrapPauseResult `
+                    -NodeName $NodeName `
+                    -BootstrapStatus $bootstrapStatus `
+                    -BootstrapConfigPath $BootstrapConfigPath `
+                    -StatusRecordPath $statusRecordPath `
+                    -PauseType 'Reboot' `
+                    -Changed $true
+            }
+
+            if ($nativeStatus -eq 'Succeeded') {
+                Remove-NativeBootstrapConfiguration `
+                    -Context $Context `
+                    -BootstrapConfigPath $BootstrapConfigPath
+
+                return New-NativeBootstrapSuccessResult `
+                    -NodeName $NodeName `
+                    -StatusRecordPath $statusRecordPath
+            }
+
+            if ($nativeStatus -eq 'Failed') {
+                Remove-NativeBootstrapConfiguration `
+                    -Context $Context `
+                    -BootstrapConfigPath $BootstrapConfigPath
+
+                if ([string]::IsNullOrWhiteSpace($nativeError)) {
+                    $nativeError = (
+                        'Native bootstrap returned Failed without an error message.'
+                    )
+                }
+
+                throw (
+                    "Native Azure Local Arc bootstrap failed for node $NodeName. " +
+                    "Error: $nativeError. Review $statusRecordPath and use " +
+                    'Collect-ArcBootstrapSupportLogs if directed by support.'
+                )
+            }
+
+            if ([datetime]::UtcNow -ge $sessionDeadline) {
+                return New-NativeBootstrapPauseResult `
+                    -NodeName $NodeName `
+                    -BootstrapStatus $bootstrapStatus `
+                    -BootstrapConfigPath $BootstrapConfigPath `
+                    -StatusRecordPath $statusRecordPath `
+                    -PauseType 'InteractiveAuthentication' `
+                    -Changed $true
+            }
+
+            Start-Sleep `
+                -Seconds $PollIntervalSeconds
+
+            $bootstrapStatus = Get-NativeBootstrapStatus `
+                -Context $Context `
+                -OperationName 'Register-ArcNodeNativeBootstrapStatus'
         }
-
-        if ([datetime]::UtcNow -ge $sessionDeadline) {
-            return New-NativeBootstrapPauseResult `
-                -NodeName $NodeName `
-                -BootstrapStatus $bootstrapStatus `
-                -BootstrapConfigPath $BootstrapConfigPath `
-                -StatusRecordPath $statusRecordPath `
-                -PauseType 'InteractiveAuthentication' `
-                -Changed $true
-        }
-
-        Start-Sleep `
-            -Seconds $PollIntervalSeconds
-
-        $bootstrapStatus = Get-NativeBootstrapStatus `
-            -Context $Context `
-            -OperationName 'Register-ArcNodeNativeBootstrapStatus'
+    }
+    finally {
+        Write-Progress `
+            -Id 42 `
+            -Activity "Native Azure Local Arc Bootstrap - $NodeName" `
+            -Completed
     }
 }
 

@@ -844,15 +844,42 @@ try {
                 )
             }
 
+                        $agentStatus = $null
+            $agentResourceId = $null
+            $agentResourceGroup = $null
+            $agentSubscriptionId = $null
+
             if ($ProhibitConnect) {
-                $agentState = @(
-                    & $agentPath show 2>&1
+                $agentShowJson = @(
+                    & $agentPath show -j 2>&1
                 ) -join "`n"
 
-                if ($agentState -match '(?i)connected') {
+                try {
+                    $agentShow = $agentShowJson |
+                        ConvertFrom-Json `
+                            -ErrorAction Stop
+                }
+                catch {
                     throw (
-                        'Arc agent appears connected after installation. ' +
-                        'Registration is prohibited during installer execution.'
+                        'Azure Connected Machine agent status could not be parsed ' +
+                        "after installation. $($_.Exception.Message)"
+                    )
+                }
+
+                $agentStatus = [string]$agentShow.status
+                $agentResourceId = [string]$agentShow.resourceId
+                $agentResourceGroup = [string]$agentShow.resourceGroup
+                $agentSubscriptionId = [string]$agentShow.subscriptionId
+
+                $agentConnected = (
+                    $agentStatus -eq 'Connected' -and
+                    -not [string]::IsNullOrWhiteSpace($agentResourceId)
+                )
+
+                if ($agentConnected) {
+                    throw (
+                        'Arc agent is connected after installation. Registration ' +
+                        'is prohibited during installer execution.'
                     )
                 }
             }
@@ -881,6 +908,10 @@ try {
                 else {
                     $null
                 }
+                                AgentStatus            = $agentStatus
+                AgentResourceId        = $agentResourceId
+                AgentResourceGroup     = $agentResourceGroup
+                AgentSubscriptionId    = $agentSubscriptionId
                 ProhibitExtensionInstall = $ProhibitExtensionInstall
             }
         }

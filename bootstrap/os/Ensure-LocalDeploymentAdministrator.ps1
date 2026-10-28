@@ -487,7 +487,7 @@ if ($changed) {
         ) `
         -AdditionalProperties @{
             Node            = $inspectionResponse.Node
-            ManagementIp    = $result.ManagementIp
+            ManagementIp    = $changeResponse.ManagementIp
             Account         = $changeResult.Account
             Created         = $changeResult.Created
             EnabledChanged  = $changeResult.EnabledChanged
