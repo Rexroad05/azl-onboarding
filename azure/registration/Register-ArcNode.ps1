@@ -171,199 +171,6 @@ function Get-PendingNativeArcSession {
     return $null
 }
 
-function Find-DeviceCode {
-    param(
-        [AllowNull()]
-        [object]$Value
-    )
-
-    if ($null -eq $Value) {
-        return $null
-    }
-
-    if ($Value -is [string]) {
-        if ([string]::IsNullOrWhiteSpace($Value)) {
-            return $null
-        }
-
-        try {
-            $parsedValue = $Value |
-                ConvertFrom-Json `
-                    -ErrorAction Stop
-
-            return Find-DeviceCode `
-                -Value $parsedValue
-        }
-        catch {
-            return $null
-        }
-    }
-
-    $userCode = Get-ObjectValue `
-        -Object $Value `
-        -Name 'UserCode'
-
-    $verificationUri = Get-ObjectValue `
-        -Object $Value `
-        -Name 'VerificationUri'
-
-    if (
-        -not [string]::IsNullOrWhiteSpace(
-            [string]$userCode
-        ) -and
-        -not [string]::IsNullOrWhiteSpace(
-            [string]$verificationUri
-        )
-    ) {
-        return [pscustomobject]@{
-            UserCode = [string]$userCode
-            VerificationUri = [string]$verificationUri
-            ExpiresOn = [string](
-                Get-ObjectValue `
-                    -Object $Value `
-                    -Name 'ExpiresOn'
-            )
-        }
-    }
-
-    if (
-        $Value -is [System.Collections.IEnumerable] -and
-        $Value -isnot [string]
-    ) {
-        foreach ($item in @($Value)) {
-            $deviceCode = Find-DeviceCode `
-                -Value $item
-
-            if ($null -ne $deviceCode) {
-                return $deviceCode
-            }
-        }
-
-        return $null
-    }
-
-    foreach ($property in @($Value.PSObject.Properties)) {
-        $deviceCode = Find-DeviceCode `
-            -Value $property.Value
-
-        if ($null -ne $deviceCode) {
-            return $deviceCode
-        }
-    }
-
-    return $null
-}
-
-function ConvertTo-NativeBootstrapResult {
-    param(
-        [AllowNull()]
-        [object]$InputObject
-    )
-
-    if ($null -eq $InputObject) {
-        return [pscustomobject]@{
-            Status = 'Unknown'
-            ErrorMessage = $null
-            RebootPending = $false
-            DetailedResponse = @()
-            DeviceCode = $null
-        }
-    }
-
-    $result = $InputObject
-
-    if (
-        $result -is [System.Collections.IEnumerable] -and
-        $result -isnot [string]
-    ) {
-        $result = @($result) |
-            Select-Object -Last 1
-    }
-
-    if ($result -is [string]) {
-        try {
-            $result = $result |
-                ConvertFrom-Json `
-                    -ErrorAction Stop
-        }
-        catch {
-            return [pscustomobject]@{
-                Status = 'Unknown'
-                ErrorMessage = $_.Exception.Message
-                RebootPending = $false
-                DetailedResponse = @()
-                DeviceCode = $null
-            }
-        }
-    }
-
-    $response = Get-ObjectValue `
-        -Object $result `
-        -Name 'Response'
-
-    if ($null -eq $response) {
-        $response = $result
-    }
-
-    $details = @(
-        @(
-            Get-ObjectValue `
-                -Object $response `
-                -Name 'DetailedResponse'
-        ) |
-            ForEach-Object {
-                [pscustomobject]@{
-                    Name = [string](
-                        Get-ObjectValue `
-                            -Object $_ `
-                            -Name 'Name'
-                    )
-                    Status = [string](
-                        Get-ObjectValue `
-                            -Object $_ `
-                            -Name 'Status'
-                    )
-                }
-            }
-    )
-
-    $errorMessage = @(
-        @(
-            Get-ObjectValue `
-                -Object $response `
-                -Name 'Errors'
-        ) |
-            ForEach-Object {
-                [string](
-                    Get-ObjectValue `
-                        -Object $_ `
-                        -Name 'ErrorMessage'
-                )
-            } |
-            Where-Object {
-                -not [string]::IsNullOrWhiteSpace($_)
-            }
-    ) -join '; '
-
-    return [pscustomobject]@{
-        Status = [string](
-            Get-ObjectValue `
-                -Object $response `
-                -Name 'Status'
-        )
-        ErrorMessage = $errorMessage
-        RebootPending = @(
-            $details |
-                Where-Object {
-                    $_.Status -eq 'RebootPending'
-                }
-        ).Count -gt 0
-        DetailedResponse = $details
-        DeviceCode = Find-DeviceCode `
-            -Value $response
-    }
-}
-
 function Get-NativeBootstrapStatus {
     param(
         [Parameter(Mandatory)]
@@ -377,6 +184,59 @@ function Get-NativeBootstrapStatus {
         -Context $Context `
         -OperationName $OperationName `
         -ScriptBlock {
+            function Get-RemoteValue {
+                param(
+                    [AllowNull()]
+                    [object]$Object,
+
+                    [Parameter(Mandatory)]
+                    [string]$Name
+                )
+
+                if ($null -eq $Object) {
+                    return $null
+                }
+
+                if ($Object -is [System.Collections.IDictionary]) {
+                    if ($Object.Contains($Name)) {
+                        return $Object[$Name]
+                    }
+
+                    return $null
+                }
+
+                $property = $Object.PSObject.Properties[$Name]
+
+                if ($null -ne $property) {
+                    return $property.Value
+                }
+
+                return $null
+            }
+
+            function Add-ErrorMessages {
+                param(
+                    [AllowNull()]
+                    [object]$Errors,
+
+                    [Parameter(Mandatory)]
+                    [AllowEmptyCollection()]
+                    [System.Collections.Generic.List[string]]$Target
+                )
+
+                foreach ($errorRecord in @($Errors)) {
+                    $message = [string](
+                        Get-RemoteValue `
+                            -Object $errorRecord `
+                            -Name 'ErrorMessage'
+                    )
+
+                    if (-not [string]::IsNullOrWhiteSpace($message)) {
+                        $Target.Add($message)
+                    }
+                }
+            }
+
             $statusCommand = Get-Command `
                 -Name Get-ArcBootstrapStatus `
                 -ErrorAction SilentlyContinue
@@ -384,29 +244,216 @@ function Get-NativeBootstrapStatus {
             if ($null -eq $statusCommand) {
                 return [pscustomobject]@{
                     CommandAvailable = $false
+                    Status = 'Unavailable'
                     ErrorMessage = (
                         'Get-ArcBootstrapStatus is unavailable on the target node.'
                     )
-                    RawStatus = $null
+                    RebootPending = $false
+                    DetailedResponse = @()
+                    DeviceCode = $null
                 }
             }
 
-            try {
+                        try {
+                            $rawStatusResults = @(
+                                Get-ArcBootstrapStatus `
+                                    -ErrorAction Stop
+                            )
+
+                            $rawStatus = @(
+                                foreach ($candidate in $rawStatusResults) {
+                                    if ($null -eq $candidate) {
+                                        continue
+                                    }
+
+                                    if (
+                                        $candidate -is [System.Collections.IDictionary] -and
+                                        $candidate.Contains('Response')
+                                    ) {
+                                        $candidate
+                                        continue
+                                    }
+
+                                    if (
+                                        $candidate -isnot [System.Collections.IDictionary] -and
+                                        $null -ne $candidate.PSObject.Properties['Response']
+                                    ) {
+                                        $candidate
+                                    }
+                                }
+                            ) |
+                                Select-Object -Last 1
+
+                            if ($null -eq $rawStatus) {
+                                $rawStatus = $rawStatusResults |
+                                    Select-Object -Last 1
+                            }
+                        }
+                        catch {
                 return [pscustomobject]@{
                     CommandAvailable = $true
-                    ErrorMessage = $null
-                    RawStatus = (
-                        Get-ArcBootstrapStatus `
-                            -ErrorAction Stop
-                    )
+                    Status = 'Unknown'
+                    ErrorMessage = $_.Exception.Message
+                    RebootPending = $false
+                    DetailedResponse = @()
+                    DeviceCode = $null
                 }
             }
-            catch {
-                return [pscustomobject]@{
-                    CommandAvailable = $true
-                    ErrorMessage = $_.Exception.Message
-                    RawStatus = $null
+
+            $responseObject = Get-RemoteValue `
+                -Object $rawStatus `
+                -Name 'Response'
+
+            if ($null -eq $responseObject) {
+                $responseObject = $rawStatus
+            }
+
+            $errorMessages = [System.Collections.Generic.List[string]]::new()
+
+            Add-ErrorMessages `
+                -Errors (
+                    Get-RemoteValue `
+                        -Object $responseObject `
+                        -Name 'Errors'
+                ) `
+                -Target $errorMessages
+
+            $queue = [System.Collections.Queue]::new()
+
+            foreach (
+                $detail in @(
+                    Get-RemoteValue `
+                        -Object $responseObject `
+                        -Name 'DetailedResponse'
+                )
+            ) {
+                if ($null -ne $detail) {
+                    $queue.Enqueue($detail)
                 }
+            }
+
+            $details = [System.Collections.Generic.List[object]]::new()
+            $arcRegistration = $null
+            $rebootPending = $false
+
+            while ($queue.Count -gt 0) {
+                $detail = $queue.Dequeue()
+
+                if ($null -eq $detail) {
+                    continue
+                }
+
+                $detailName = [string](
+                    Get-RemoteValue `
+                        -Object $detail `
+                        -Name 'Name'
+                )
+
+                $detailStatus = [string](
+                    Get-RemoteValue `
+                        -Object $detail `
+                        -Name 'Status'
+                )
+
+                $details.Add([pscustomobject]@{
+                    Name = $detailName
+                    Status = $detailStatus
+                })
+
+                if ($detailStatus -eq 'RebootPending') {
+                    $rebootPending = $true
+                }
+
+                Add-ErrorMessages `
+                    -Errors (
+                        Get-RemoteValue `
+                            -Object $detail `
+                            -Name 'Errors'
+                    ) `
+                    -Target $errorMessages
+
+                if ($detailName -eq 'ArcRegistration') {
+                    $arcRegistration = $detail
+                }
+
+                foreach (
+                    $child in @(
+                        Get-RemoteValue `
+                            -Object $detail `
+                            -Name 'DetailedResponse'
+                    )
+                ) {
+                    if ($null -ne $child) {
+                        $queue.Enqueue($child)
+                    }
+                }
+            }
+
+            $deviceCode = $null
+
+            if ($null -ne $arcRegistration) {
+                $arcRegistrationMessage = [string](
+                    Get-RemoteValue `
+                        -Object $arcRegistration `
+                        -Name 'Message'
+                )
+
+                if (
+                    -not [string]::IsNullOrWhiteSpace(
+                        $arcRegistrationMessage
+                    )
+                ) {
+                    try {
+                        $messageObject = $arcRegistrationMessage |
+                            ConvertFrom-Json `
+                                -ErrorAction Stop
+
+                        $userCode = [string](
+                            Get-RemoteValue `
+                                -Object $messageObject `
+                                -Name 'UserCode'
+                        )
+
+                        $verificationUri = [string](
+                            Get-RemoteValue `
+                                -Object $messageObject `
+                                -Name 'VerificationUri'
+                        )
+
+                        if (
+                            -not [string]::IsNullOrWhiteSpace($userCode) -and
+                            -not [string]::IsNullOrWhiteSpace($verificationUri)
+                        ) {
+                            $deviceCode = [pscustomobject]@{
+                                UserCode = $userCode
+                                VerificationUri = $verificationUri
+                                ExpiresOn = [string](
+                                    Get-RemoteValue `
+                                        -Object $messageObject `
+                                        -Name 'ExpiresOn'
+                                )
+                            }
+                        }
+                    }
+                    catch {
+                        # ArcRegistration.Message is not always device-code JSON.
+                    }
+                }
+            }
+
+            return [pscustomobject]@{
+                CommandAvailable = $true
+                Status = [string](
+                    Get-RemoteValue `
+                        -Object $responseObject `
+                        -Name 'Status'
+                )
+                ErrorMessage = (
+                    @($errorMessages | Select-Object -Unique) -join '; '
+                )
+                RebootPending = $rebootPending
+                DetailedResponse = $details.ToArray()
+                DeviceCode = $deviceCode
             }
         }
 
@@ -417,36 +464,7 @@ function Get-NativeBootstrapStatus {
         throw 'Native Azure Local bootstrap status query returned no data.'
     }
 
-    if (-not [bool]$data.CommandAvailable) {
-        return [pscustomobject]@{
-            CommandAvailable = $false
-            Status = 'Unavailable'
-            ErrorMessage = [string]$data.ErrorMessage
-            RebootPending = $false
-            DetailedResponse = @()
-            DeviceCode = $null
-        }
-    }
-
-    $bootstrapResult = ConvertTo-NativeBootstrapResult `
-        -InputObject $data.RawStatus
-
-    if (
-        -not [string]::IsNullOrWhiteSpace(
-            [string]$data.ErrorMessage
-        )
-    ) {
-        $bootstrapResult.ErrorMessage = [string]$data.ErrorMessage
-    }
-
-    $bootstrapResult |
-        Add-Member `
-            -MemberType NoteProperty `
-            -Name CommandAvailable `
-            -Value $true `
-            -Force
-
-    return $bootstrapResult
+    return $data
 }
 
 function Start-NativeBootstrap {
@@ -615,21 +633,34 @@ function Start-NativeBootstrap {
                     -Encoding utf8
 
             try {
+                $null = Start-ArcBootstrap `
+                    -ConfigFilePath $bootstrapConfigPath `
+                    -ErrorAction Stop
+
                 return [pscustomobject]@{
                     AgentPath = $agentPath
                     BootstrapConfigPath = $bootstrapConfigPath
-                    RawBootstrapStatus = (
-                        Start-ArcBootstrap `
-                            -ConfigFilePath $bootstrapConfigPath `
-                            -ErrorAction Stop
-                    )
+                    AlreadyInProgress = $false
                 }
             }
             catch {
+                $startError = $_.Exception.Message
+
                 Remove-Item `
                     -LiteralPath $bootstrapConfigPath `
                     -Force `
                     -ErrorAction SilentlyContinue
+
+                if (
+                    $startError -match
+                    '(?i)workitem\s+already\s+submi\w*\s+with\s+different\s+taskid'
+                ) {
+                    return [pscustomobject]@{
+                        AgentPath = $agentPath
+                        BootstrapConfigPath = $null
+                        AlreadyInProgress = $true
+                    }
+                }
 
                 throw
             }
@@ -643,10 +674,21 @@ function Start-NativeBootstrap {
     }
 
     return [pscustomobject]@{
-        AgentPath = [string]$data.AgentPath
-        BootstrapConfigPath = [string]$data.BootstrapConfigPath
-        BootstrapStatus = ConvertTo-NativeBootstrapResult `
-            -InputObject $data.RawBootstrapStatus
+        AgentPath = [string](
+            Get-ObjectValue `
+                -Object $data `
+                -Name 'AgentPath'
+        )
+        BootstrapConfigPath = [string](
+            Get-ObjectValue `
+                -Object $data `
+                -Name 'BootstrapConfigPath'
+        )
+        AlreadyInProgress = [bool](
+            Get-ObjectValue `
+                -Object $data `
+                -Name 'AlreadyInProgress'
+        )
     }
 }
 
@@ -729,7 +771,7 @@ function Write-NativeBootstrapStatusRecord {
         -Force |
         Out-Null
 
-    # Deliberately excludes DeviceCode and raw nested service messages.
+    # DeviceCode is deliberately excluded.
     $record = [ordered]@{
         TimestampUtc = [datetime]::UtcNow.ToString('o')
         Node = $NodeName
@@ -811,6 +853,26 @@ function Write-NativeBootstrapDeviceCode {
 
     if (-not [string]::IsNullOrWhiteSpace($expiresOn)) {
         Write-Host "  Expires: $expiresOn" -ForegroundColor Yellow
+    }
+
+    $clipboardValue = @(
+        "URL: $verificationUri"
+        "Code: $userCode"
+        "Expires: $expiresOn"
+    ) -join [Environment]::NewLine
+
+    try {
+        Set-Clipboard `
+            -Value $clipboardValue
+
+        Write-Host (
+            '  The device-code URL and code were copied to the execution-host clipboard.'
+        ) -ForegroundColor Yellow
+    }
+    catch {
+        Write-Host (
+            '  Clipboard copy was unavailable. Copy the displayed URL and code manually.'
+        ) -ForegroundColor Yellow
     }
 
     Write-Host (
@@ -985,6 +1047,10 @@ function Invoke-NativeBootstrapSession {
                 -Object $bootstrapStatus `
                 -Name 'RebootPending'
         )
+
+        if ([string]::IsNullOrWhiteSpace($nativeStatus)) {
+            $nativeStatus = 'Unknown'
+        }
 
         if ($nativeStatus -ne $lastStatus) {
             Write-Host (
@@ -1369,20 +1435,44 @@ $currentBootstrapStatus = Get-NativeBootstrapStatus `
     -Context $Context `
     -OperationName 'Register-ArcNodeNativeBootstrapPrecheck'
 
-if (-not $currentBootstrapStatus.CommandAvailable) {
+$currentCommandAvailable = [bool](
+    Get-ObjectValue `
+        -Object $currentBootstrapStatus `
+        -Name 'CommandAvailable'
+)
+
+$currentNativeStatus = [string](
+    Get-ObjectValue `
+        -Object $currentBootstrapStatus `
+        -Name 'Status'
+)
+
+$currentNativeError = [string](
+    Get-ObjectValue `
+        -Object $currentBootstrapStatus `
+        -Name 'ErrorMessage'
+)
+
+$currentRebootPending = [bool](
+    Get-ObjectValue `
+        -Object $currentBootstrapStatus `
+        -Name 'RebootPending'
+)
+
+if (-not $currentCommandAvailable) {
     return New-HcnEnsureResult `
         -Check 'Register-ArcNode' `
         -Outcome 'Blocked' `
         -Summary (
             "Native Azure Local bootstrap status command is unavailable on node " +
-            "$nodeName. $($currentBootstrapStatus.ErrorMessage)"
+            "$nodeName. $currentNativeError"
         ) `
         -AdditionalProperties @{
             Node = $nodeName
         }
 }
 
-if ($currentBootstrapStatus.RebootPending) {
+if ($currentRebootPending) {
     $reason = (
         'Native Azure Local Arc bootstrap requires a controlled reboot before ' +
         'registration validation can continue.'
@@ -1404,7 +1494,37 @@ if ($currentBootstrapStatus.RebootPending) {
         }
 }
 
-if ($currentBootstrapStatus.Status -eq 'Succeeded') {
+$deviceCodeExpired = (
+    $currentNativeStatus -eq 'Failed' -and
+    $currentNativeError -match (
+        '(?i)DeviceCodeExpiredException|verification code expired'
+    )
+)
+
+if (
+    $currentNativeStatus -eq 'Failed' -and
+    -not $deviceCodeExpired
+) {
+    if ([string]::IsNullOrWhiteSpace($currentNativeError)) {
+        $currentNativeError = 'No native bootstrap error detail was returned.'
+    }
+
+    return New-HcnEnsureResult `
+        -Check 'Register-ArcNode' `
+        -Outcome 'Blocked' `
+        -Summary (
+            "Native Azure Local Arc bootstrap is Failed on node $nodeName. " +
+            "Do not automatically retry. $currentNativeError"
+        ) `
+        -AdditionalProperties @{
+            Node = $nodeName
+            BootstrapStatus = 'Failed'
+            BootstrapError = $currentNativeError
+            SupportLogCommand = 'Collect-ArcBootstrapSupportLogs'
+        }
+}
+
+if ($currentNativeStatus -eq 'Succeeded') {
     return New-HcnEnsureResult `
         -Check 'Register-ArcNode' `
         -Outcome 'AlreadyCompliant' `
@@ -1419,33 +1539,43 @@ if ($currentBootstrapStatus.Status -eq 'Succeeded') {
         }
 }
 
-if ($currentBootstrapStatus.Status -eq 'Failed') {
-    $nativeError = [string]$currentBootstrapStatus.ErrorMessage
-
-    if ([string]::IsNullOrWhiteSpace($nativeError)) {
-        $nativeError = 'No native bootstrap error detail was returned.'
-    }
-
-    return New-HcnEnsureResult `
-        -Check 'Register-ArcNode' `
-        -Outcome 'Blocked' `
-        -Summary (
-            "Native Azure Local Arc bootstrap is Failed on node $nodeName. " +
-            "Do not automatically retry. $nativeError"
-        ) `
-        -AdditionalProperties @{
-            Node = $nodeName
-            BootstrapStatus = 'Failed'
-            BootstrapError = $nativeError
-            SupportLogCommand = 'Collect-ArcBootstrapSupportLogs'
-        }
+if ($currentNativeStatus -eq 'InProgress') {
+    return Invoke-NativeBootstrapSession `
+        -Context $Context `
+        -NodeName $nodeName `
+        -InitialBootstrapStatus $currentBootstrapStatus `
+        -BootstrapConfigPath $null `
+        -StatusRecordPath $null `
+        -PollIntervalSeconds $statusPollIntervalSeconds `
+        -SessionTimeoutMinutes $sessionTimeoutMinutes
 }
 
 $approvalKey = Get-ApprovalKey `
     -Context $Context `
     -NodeName $nodeName
 
+if ($deviceCodeExpired) {
+    $approvalKey = "$approvalKey.DeviceCodeRetry"
+}
+
 if (-not (Test-ApprovedOperation -Context $Context -ApprovalKey $approvalKey)) {
+    $approvalReason = if ($deviceCodeExpired) {
+        (
+            'The prior native Azure Local device code expired before authentication ' +
+            'completed. The factory will request a new native bootstrap work item ' +
+            'and present a fresh Azure Government device code. This action does not ' +
+            'authorize automatic updates, reboots, or extension deployment.'
+        )
+    }
+    else {
+        (
+            'The factory will start native Azure Local bootstrap and present ' +
+            'Azure Government device-code authentication in the active ' +
+            'registration session. This action does not authorize automatic ' +
+            'updates, reboots, or extension deployment.'
+        )
+    }
+
     return New-HcnEnsureResult `
         -Check 'Register-ArcNode' `
         -Outcome 'Blocked' `
@@ -1455,12 +1585,7 @@ if (-not (Test-ApprovedOperation -Context $Context -ApprovalKey $approvalKey)) {
         -AdditionalProperties @{
             RequiresApproval = $true
             ApprovalKey = $approvalKey
-            ApprovalReason = (
-                'The factory will start native Azure Local bootstrap and present ' +
-                'Azure Government device-code authentication in the active ' +
-                'registration session. This action does not authorize automatic ' +
-                'updates, reboots, or extension deployment.'
-            )
+            ApprovalReason = $approvalReason
             RequiresReboot = $false
             ReconnectTarget = $nodeName
             Node = $nodeName
@@ -1479,10 +1604,14 @@ $startResult = Start-NativeBootstrap `
     -Cloud $cloud `
     -NodeName $nodeName
 
+$bootstrapStatus = Get-NativeBootstrapStatus `
+    -Context $Context `
+    -OperationName 'Register-ArcNodeNativeBootstrapStatus'
+
 return Invoke-NativeBootstrapSession `
     -Context $Context `
     -NodeName $nodeName `
-    -InitialBootstrapStatus $startResult.BootstrapStatus `
+    -InitialBootstrapStatus $bootstrapStatus `
     -BootstrapConfigPath $startResult.BootstrapConfigPath `
     -StatusRecordPath $null `
     -PollIntervalSeconds $statusPollIntervalSeconds `

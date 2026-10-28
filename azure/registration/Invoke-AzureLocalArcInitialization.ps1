@@ -164,9 +164,9 @@ $inspectionResponse = Invoke-ManagementPlaneCommand `
 
             if ($null -eq $InputObject) {
                 return [pscustomobject]@{
-                    Status           = 'Unknown'
-                    ErrorMessage     = $null
-                    RebootPending    = $false
+                    Status = 'Unknown'
+                    ErrorMessage = $null
+                    RebootPending = $false
                     DetailedResponse = @()
                 }
             }
@@ -175,13 +175,15 @@ $inspectionResponse = Invoke-ManagementPlaneCommand `
 
             if ($result -is [string]) {
                 try {
-                    $result = $result | ConvertFrom-Json -ErrorAction Stop
+                    $result = $result |
+                        ConvertFrom-Json `
+                            -ErrorAction Stop
                 }
                 catch {
                     return [pscustomobject]@{
-                        Status           = 'Unknown'
-                        ErrorMessage     = $_.Exception.Message
-                        RebootPending    = $false
+                        Status = 'Unknown'
+                        ErrorMessage = $_.Exception.Message
+                        RebootPending = $false
                         DetailedResponse = @()
                     }
                 }
@@ -197,8 +199,8 @@ $inspectionResponse = Invoke-ManagementPlaneCommand `
                 @($response.DetailedResponse) |
                     ForEach-Object {
                         [pscustomobject]@{
-                            Name       = [string]$_.Name
-                            Status     = [string]$_.Status
+                            Name = [string]$_.Name
+                            Status = [string]$_.Status
                             HasMessage = -not [string]::IsNullOrWhiteSpace(
                                 [string]$_.Message
                             )
@@ -216,10 +218,10 @@ $inspectionResponse = Invoke-ManagementPlaneCommand `
                     }
             ) -join '; '
 
-            [pscustomobject]@{
-                Status           = [string]$response.Status
-                ErrorMessage     = $errorMessage
-                RebootPending    = @(
+            return [pscustomobject]@{
+                Status = [string]$response.Status
+                ErrorMessage = $errorMessage
+                RebootPending = @(
                     @($detailedResponse) |
                         Where-Object {
                             $_.Status -eq 'RebootPending'
@@ -229,7 +231,9 @@ $inspectionResponse = Invoke-ManagementPlaneCommand `
             }
         }
 
-$cluster = Get-Cluster -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+        $cluster = Get-Cluster `
+            -ErrorAction SilentlyContinue `
+            -WarningAction SilentlyContinue
 
         $registrationStatus = $null
         $azureResourceName = $null
@@ -267,9 +271,9 @@ $cluster = Get-Cluster -ErrorAction SilentlyContinue -WarningAction SilentlyCont
         }
 
         $nativeBootstrapSummary = [pscustomobject]@{
-            Status           = 'Unavailable'
-            ErrorMessage     = $null
-            RebootPending    = $false
+            Status = 'Unavailable'
+            ErrorMessage = $null
+            RebootPending = $false
             DetailedResponse = @()
         }
 
@@ -283,9 +287,9 @@ $cluster = Get-Cluster -ErrorAction SilentlyContinue -WarningAction SilentlyCont
             }
             catch {
                 $nativeBootstrapSummary = [pscustomobject]@{
-                    Status           = 'Unknown'
-                    ErrorMessage     = $_.Exception.Message
-                    RebootPending    = $false
+                    Status = 'Unknown'
+                    ErrorMessage = $_.Exception.Message
+                    RebootPending = $false
                     DetailedResponse = @()
                 }
             }
@@ -307,21 +311,21 @@ $cluster = Get-Cluster -ErrorAction SilentlyContinue -WarningAction SilentlyCont
         }
 
         [pscustomobject]@{
-            ComputerName                 = $env:COMPUTERNAME
-            Clustered                    = ($null -ne $cluster)
-            ClusterName                  = if ($null -ne $cluster) {
+            ComputerName = $env:COMPUTERNAME
+            Clustered = ($null -ne $cluster)
+            ClusterName = if ($null -ne $cluster) {
                 [string]$cluster.Name
             }
             else {
                 $null
             }
-            RegistrationStatus           = $registrationStatus
-            AzureResourceName            = $azureResourceName
-            AgentPresent                 = -not [string]::IsNullOrWhiteSpace(
+            RegistrationStatus = $registrationStatus
+            AzureResourceName = $azureResourceName
+            AgentPresent = -not [string]::IsNullOrWhiteSpace(
                 $agentPath
             )
-            AgentPath                    = $agentPath
-            AgentVersion                 = if (
+            AgentPath = $agentPath
+            AgentVersion = if (
                 -not [string]::IsNullOrWhiteSpace($agentPath)
             ) {
                 @(
@@ -331,19 +335,19 @@ $cluster = Get-Cluster -ErrorAction SilentlyContinue -WarningAction SilentlyCont
             else {
                 $null
             }
-            AgentShow                    = $agentShow
-            HimdsPresent                 = ($null -ne $himdsService)
-            HimdsStatus                  = if ($null -ne $himdsService) {
+            AgentShow = $agentShow
+            HimdsPresent = ($null -ne $himdsService)
+            HimdsStatus = if ($null -ne $himdsService) {
                 [string]$himdsService.Status
             }
             else {
                 $null
             }
-            NativeBootstrapAvailability  = $nativeBootstrapAvailability
-            NativeBootstrapStatus        = $nativeBootstrapSummary.Status
-            NativeBootstrapError         = $nativeBootstrapSummary.ErrorMessage
+            NativeBootstrapAvailability = $nativeBootstrapAvailability
+            NativeBootstrapStatus = $nativeBootstrapSummary.Status
+            NativeBootstrapError = $nativeBootstrapSummary.ErrorMessage
             NativeBootstrapRebootPending = $nativeBootstrapSummary.RebootPending
-            NativeBootstrapDetails       = $nativeBootstrapSummary.DetailedResponse
+            NativeBootstrapDetails = $nativeBootstrapSummary.DetailedResponse
         }
     }
 
@@ -375,9 +379,9 @@ if ($null -ne $missingNativeCommands) {
             "$nodeName. Missing command(s): $($missingNativeCommands -join ', ')."
         ) `
         -AdditionalProperties @{
-            Node                   = $nodeName
-            MissingNativeCommands  = $missingNativeCommands
-            NativeBootstrapStatus  = $inspection.NativeBootstrapStatus
+            Node = $nodeName
+            MissingNativeCommands = $missingNativeCommands
+            NativeBootstrapStatus = $inspection.NativeBootstrapStatus
             NativeBootstrapDetails = $inspection.NativeBootstrapDetails
         }
 }
@@ -391,9 +395,9 @@ if ($requireExistingClusterBlock -and $inspection.Clustered) {
             'Arc initialization is blocked.'
         ) `
         -AdditionalProperties @{
-            Node            = $nodeName
+            Node = $nodeName
             ExistingCluster = $true
-            ClusterName     = $inspection.ClusterName
+            ClusterName = $inspection.ClusterName
         }
 }
 
@@ -415,9 +419,9 @@ if (
             "Azure resource: $($inspection.AzureResourceName)."
         ) `
         -AdditionalProperties @{
-            Node               = $nodeName
+            Node = $nodeName
             RegistrationStatus = $inspection.RegistrationStatus
-            AzureResourceName  = $inspection.AzureResourceName
+            AzureResourceName = $inspection.AzureResourceName
         }
 }
 
@@ -430,7 +434,7 @@ if ($requireConnectedMachineAgent -and -not $inspection.AgentPresent) {
             "on node $nodeName."
         ) `
         -AdditionalProperties @{
-            Node         = $nodeName
+            Node = $nodeName
             AgentCommand = $agentCommand
             AgentPresent = $false
         }
@@ -451,15 +455,25 @@ if (
             "$nodeName."
         ) `
         -AdditionalProperties @{
-            Node         = $nodeName
+            Node = $nodeName
             AgentPresent = $inspection.AgentPresent
-            AgentPath    = $inspection.AgentPath
+            AgentPath = $inspection.AgentPath
             HimdsPresent = $inspection.HimdsPresent
-            HimdsStatus  = $inspection.HimdsStatus
+            HimdsStatus = $inspection.HimdsStatus
         }
 }
 
-if ($inspection.NativeBootstrapStatus -eq 'Failed') {
+$retryableDeviceCodeExpiry = (
+    $inspection.NativeBootstrapStatus -eq 'Failed' -and
+    [string]$inspection.NativeBootstrapError -match (
+        '(?i)DeviceCodeExpiredException|verification code expired'
+    )
+)
+
+if (
+    $inspection.NativeBootstrapStatus -eq 'Failed' -and
+    -not $retryableDeviceCodeExpiry
+) {
     return New-HcnEnsureResult `
         -Check 'Invoke-AzureLocalArcInitialization' `
         -Outcome 'Blocked' `
@@ -469,35 +483,47 @@ if ($inspection.NativeBootstrapStatus -eq 'Failed') {
             'before attempting another registration.'
         ) `
         -AdditionalProperties @{
-            Node                   = $nodeName
-            NativeBootstrapStatus  = $inspection.NativeBootstrapStatus
-            NativeBootstrapError   = $inspection.NativeBootstrapError
+            Node = $nodeName
+            NativeBootstrapStatus = $inspection.NativeBootstrapStatus
+            NativeBootstrapError = $inspection.NativeBootstrapError
             NativeBootstrapDetails = $inspection.NativeBootstrapDetails
-            SupportLogCommand      = 'Collect-ArcBootstrapSupportLogs'
+            SupportLogCommand = 'Collect-ArcBootstrapSupportLogs'
         }
+}
+
+$summary = if ($retryableDeviceCodeExpiry) {
+    (
+        "Native Azure Local Arc bootstrap prerequisites are present for node " +
+        "$nodeName. The prior device code expired; a fresh approved native " +
+        'registration attempt may request a new device code.'
+    )
+}
+else {
+    (
+        "Native Azure Local Arc bootstrap prerequisites are present for node " +
+        "$nodeName. Native bootstrap state: $($inspection.NativeBootstrapStatus). " +
+        'No registration, update, reboot, or extension deployment was performed.'
+    )
 }
 
 return New-HcnEnsureResult `
     -Check 'Invoke-AzureLocalArcInitialization' `
     -Outcome 'AlreadyCompliant' `
-    -Summary (
-        "Native Azure Local Arc bootstrap prerequisites are present for node " +
-        "$nodeName. Native bootstrap state: $($inspection.NativeBootstrapStatus). " +
-        'No registration, update, reboot, or extension deployment was performed.'
-    ) `
+    -Summary $summary `
     -AdditionalProperties @{
-        Node                       = $nodeName
-        AgentCommand               = $agentCommand
-        AgentPresent               = $inspection.AgentPresent
-        AgentPath                  = $inspection.AgentPath
-        AgentVersion               = $inspection.AgentVersion
-        AgentShow                  = $inspection.AgentShow
-        HimdsPresent               = $inspection.HimdsPresent
-        HimdsStatus                = $inspection.HimdsStatus
-        RegistrationStatus         = $inspection.RegistrationStatus
-        AzureResourceName          = $inspection.AzureResourceName
-        NativeBootstrapStatus      = $inspection.NativeBootstrapStatus
-        NativeBootstrapError       = $inspection.NativeBootstrapError
-        NativeBootstrapDetails     = $inspection.NativeBootstrapDetails
+        Node = $nodeName
+        AgentCommand = $agentCommand
+        AgentPresent = $inspection.AgentPresent
+        AgentPath = $inspection.AgentPath
+        AgentVersion = $inspection.AgentVersion
+        AgentShow = $inspection.AgentShow
+        HimdsPresent = $inspection.HimdsPresent
+        HimdsStatus = $inspection.HimdsStatus
+        RegistrationStatus = $inspection.RegistrationStatus
+        AzureResourceName = $inspection.AzureResourceName
+        NativeBootstrapStatus = $inspection.NativeBootstrapStatus
+        NativeBootstrapError = $inspection.NativeBootstrapError
+        NativeBootstrapDetails = $inspection.NativeBootstrapDetails
+        NativeBootstrapRetryable = $retryableDeviceCodeExpiry
         NativeBootstrapAvailability = $nativeBootstrapAvailability
     }

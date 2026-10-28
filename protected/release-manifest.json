@@ -1,10 +1,10 @@
 {
   "releaseVersion": "1.0.4",
-  "generatedAtUtc": "2026-10-26T18:59:07.3184524Z",
+  "generatedAtUtc": "2026-10-27T18:01:43.3022776Z",
   "files": [
     {
       "path": ".gitignore",
-      "sha256": "A31FC2ABB7B4301C67CF1B57F214B752B6210E066FD27552A8A1CD3663D8B6F0"
+      "sha256": "97254EECBAE9F2D9DA3CB6BE8BC0918D740E1DA7EFAD164A1502104FCCD55BDB"
     },
     {
       "path": "azure/deployment/Get-AzureLocalOfficialTemplate.ps1",
@@ -68,15 +68,15 @@
     },
     {
       "path": "azure/registration/Invoke-AzureLocalArcInitialization.ps1",
-      "sha256": "EB228393FFEFC5ED851B11DD173DBFC904612387063041CECCF788DE94271EB4"
+      "sha256": "9572CD4F86A075EACEAD15F67AECA181264C5CB6C36BE7FEE68B9BA343C4A06B"
     },
     {
       "path": "azure/registration/Register-ArcNode.ps1",
-      "sha256": "B510B8B28344B063B7951DFE3DBFC8FDA682977E8FC2EBF2D65DCAAA034AEE3A"
+      "sha256": "BA2D7C179958ED39AB6817B403C39D805DA4A839D4A32922BC826C04730E67B5"
     },
     {
       "path": "azure/registration/Test-ArcRegistration.ps1",
-      "sha256": "0C14E5A67572097FABA9CDFED61DD497D6783CF650D180B8D758F8BB9C80BCFD"
+      "sha256": "9A702BDCB38C432283760B54F6E372E139C2AE50D5F18C327100DCDD6880C80E"
     },
     {
       "path": "azure/registration/Test-AzureRegistrationInputs.ps1",
@@ -188,7 +188,7 @@
     },
     {
       "path": "controller/Invoke-AzureLocalFactory.ps1",
-      "sha256": "398A0C46009DD2BC46195692D7D53E712D290DE753F27090F67FBD0AE183EC7C"
+      "sha256": "0018BC67A0A5940A5D8721F7F9E4F5A3C8853D40D7B09857ACA0A7926BDEDCCE"
     },
     {
       "path": "controller/Invoke-NodeRebootAndReconnect.ps1",
@@ -204,7 +204,7 @@
     },
     {
       "path": "controller/Invoke-Stage.ps1",
-      "sha256": "E8C22D0FE8AE7A94D778ABEADD642F8333939E91FB42E2B72ACDF2C4C4AACD13"
+      "sha256": "425B9388923A52180B7D998981E5B17D74305C7F4CEDD6C4D95634BD9980D0C7"
     },
     {
       "path": "controller/Invoke-ValidationGate.ps1",
@@ -292,7 +292,7 @@
     },
     {
       "path": "launcher/Get-DeploymentManagerStatus.ps1",
-      "sha256": "4D15DA84FA20E02B92575CAA9ABA1EA8695A3FBC3887317C9E4A070B3DE2202D"
+      "sha256": "49F22AF06C6FF26EC650010D470CDBBE29DF5BEB4899106D64C54304A89753BE"
     },
     {
       "path": "launcher/Initialize-AzureGovernmentSession.ps1",
@@ -312,7 +312,7 @@
     },
     {
       "path": "launcher/Start-AzureLocalDeploymentManager.ps1",
-      "sha256": "A83ADA870E87B010D04C84E14589C80ED2AE3046EEE4E11314D093373C954EFB"
+      "sha256": "1E347F855C9C68A43C00DC534E7ABF965CF4A8401AF15653D2450EE2261443A7"
     },
     {
       "path": "launcher/Start-ReadOnlyValidation.ps1",
@@ -524,7 +524,7 @@
     },
     {
       "path": "protected/defaults.yaml",
-      "sha256": "07AFB5FD6F27EF157251071969CA98E3F67A56866BAF911E2AFCF18A3DF2312D"
+      "sha256": "B73A0D02C779F0C3B557448C42496476F27B5AAED9FB360EF251B01F6E1BA0B0"
     },
     {
       "path": "protected/phase-manifest.yaml",
@@ -540,7 +540,7 @@
     },
     {
       "path": "protected/site-profiles.yaml",
-      "sha256": "00B5F32BC1EC8FE041580AECFE7B207D9502E991BBEB8045E21D7B54E765FD99"
+      "sha256": "C9D99E82B6355CD57D26DBC7E37FE5EA01A249013E0D378132AF9E879F1D0DFE"
     },
     {
       "path": "README.md",
@@ -596,7 +596,7 @@
     },
     {
       "path": "Run-AzureLocalDeploymentManager.cmd",
-      "sha256": "F8638C84C8E5AE7962149F37F84C3C750B4D7A999F9DD6F24F4048AAF4DC4BBE"
+      "sha256": "FE4EB3909853F92433F587CFB70AD6378DFCE13FDEB456A614A7A91BBF69195E"
     },
     {
       "path": "state/README.md",
@@ -604,7 +604,7 @@
     },
     {
       "path": "state/state.schema.json",
-      "sha256": "C6DBC54D55D575D19060110CA37AEB963FC0565CC44ACB6EA73B90AF7F10990B"
+      "sha256": "C4BF0DD311C569FF332DF720842FEBB15BB2EAD81E566E9CEE923270CE4FE9D2"
     },
     {
       "path": "tests/unit/ArcAgentInstaller.Tests.ps1",
@@ -616,7 +616,7 @@
     },
     {
       "path": "tests/unit/ArcRegistrationBehavior.Tests.ps1",
-      "sha256": "9C79924E40BFE4688BB3290693EA2F4EC09B52BFBB708E9217350A9CC0663050"
+      "sha256": "DC722DF2106132E98912C284815490F3350976D34F823ADC3CC57E57FB419AB4"
     },
     {
       "path": "tests/unit/Batch2BBehavior.Tests.ps1",
@@ -688,7 +688,7 @@
     },
     {
       "path": "tests/unit/Phase14ArcRegistration.Tests.ps1",
-      "sha256": "669DA3B7EA105D4720A9704DB7D4CC57BCE3B39DFFCE9D69BF894428FA76004D"
+      "sha256": "B9B4701678676A7AE76CE666F6F94898F3E61D72255236B0D5CAE2C0049A4D6D"
     },
     {
       "path": "tests/unit/Phase21ClusterDeployment.Tests.ps1",
@@ -700,7 +700,7 @@
     },
     {
       "path": "tests/unit/RebootBehavior.Tests.ps1",
-      "sha256": "DBE0CAE67BDD6A9E8932C63B349169EF8DFDB321C145CAA374D7F9C787481A74"
+      "sha256": "72535F6C30147A6D485D72A4832F533B5AE9BE41C9C6A79291F69D118E6CB7B6"
     },
     {
       "path": "tests/unit/Stage13AzureAdapterMappings.Tests.ps1",
@@ -708,7 +708,7 @@
     },
     {
       "path": "tests/unit/StageTargetedExecution.Tests.ps1",
-      "sha256": "C9812211DB297296431C573EC6C816B438FD4330C9AB5E8CF9DFA5E96A710B2A"
+      "sha256": "9E219E5C0C75E3C707FED3D6B2DD69DADCFB6B56CE11029A8B5E95A76966E57C"
     },
     {
       "path": "tests/unit/TemporaryCertificateExceptionWorkflow.Tests.ps1",
@@ -724,7 +724,7 @@
     },
     {
       "path": "tests/unit/WorkflowRegression.Tests.ps1",
-      "sha256": "1750C49D83FD478B05FF1021BE6B115A9D718ED1841FD31C78CAFFB58F0EA855"
+      "sha256": "8ED95BB505351F3D1DF6F19E5726891EBA948D00D743D71D49EA94C83CDC8403"
     },
     {
       "path": "tools/Invoke-LegacyWorkflowCleanup.ps1",

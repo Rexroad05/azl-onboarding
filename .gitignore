@@ -4,3 +4,7 @@ secure/
 *.vhd*
 *.log
 .env
+operator-inputs/
+archive/
+*.log
+deployment-state.json

@@ -48,7 +48,7 @@ function New-ArcQueueHook {
     }.GetNewClosure()
 }
 
-function New-NativeBootstrapRawStatus {
+function New-NativeBootstrapStatusResponse {
     param(
         [Parameter(Mandatory)]
         [string]$Status,
@@ -69,58 +69,35 @@ function New-NativeBootstrapRawStatus {
             [pscustomobject]@{
                 Name = 'ArcRegistration'
                 Status = 'RebootPending'
-                Message = $null
             }
         )
     }
-
-    $errors = @()
-
-    if (-not [string]::IsNullOrWhiteSpace($ErrorMessage)) {
-        $errors = @(
-            [pscustomobject]@{
-                ErrorMessage = $ErrorMessage
-            }
-        )
-    }
-
-    $response = [ordered]@{
-        Status = $Status
-        Errors = $errors
-        DetailedResponse = $details
-    }
-
-    if ($null -ne $DeviceCode) {
-        $response['DeviceCode'] = $DeviceCode
-    }
-
-    return [pscustomobject]@{
-        Response = [pscustomobject]$response
-    }
-}
-
-function New-NativeBootstrapStatusResponse {
-    param(
-        [Parameter(Mandatory)]
-        [string]$Status,
-
-        [AllowNull()]
-        [string]$ErrorMessage = $null,
-
-        [bool]$RebootPending = $false,
-
-        [AllowNull()]
-        [object]$DeviceCode = $null
-    )
 
     return [pscustomobject]@{
         CommandAvailable = $true
-        ErrorMessage = $null
-        RawStatus = New-NativeBootstrapRawStatus `
-            -Status $Status `
-            -ErrorMessage $ErrorMessage `
-            -RebootPending $RebootPending `
-            -DeviceCode $DeviceCode
+        Status = $Status
+        ErrorMessage = $ErrorMessage
+        RebootPending = $RebootPending
+        DetailedResponse = $details
+        DeviceCode = $DeviceCode
+    }
+}
+
+function New-NativeBootstrapStartResponse {
+    param(
+        [bool]$AlreadyInProgress = $false
+    )
+
+    return [pscustomobject]@{
+        AgentPath = (
+            'C:\Program Files\AzureConnectedMachineAgent\' +
+            'azcmagent.exe'
+        )
+        BootstrapConfigPath = (
+            'C:\Windows\Temp\' +
+            'NativeArcBootstrap-TESTHCN01.json'
+        )
+        AlreadyInProgress = $AlreadyInProgress
     }
 }
 
@@ -286,18 +263,14 @@ Describe 'Interactive Arc Registration Behavior' {
             (New-ArcRemoteResponse `
                 -OperationName 'Register-ArcNodeNativeBootstrapStart' `
                 -Data @(
-                    [pscustomobject]@{
-                        AgentPath = (
-                            'C:\Program Files\AzureConnectedMachineAgent\' +
-                            'azcmagent.exe'
-                        )
-                        BootstrapConfigPath = (
-                            'C:\Windows\Temp\' +
-                            'NativeArcBootstrap-TESTHCN01.json'
-                        )
-                        RawBootstrapStatus = New-NativeBootstrapRawStatus `
-                            -Status 'Succeeded'
-                    }
+                    (New-NativeBootstrapStartResponse)
+                )),
+
+            (New-ArcRemoteResponse `
+                -OperationName 'Register-ArcNodeNativeBootstrapStatus' `
+                -Data @(
+                    (New-NativeBootstrapStatusResponse `
+                        -Status 'Succeeded')
                 )),
 
             (New-ArcRemoteResponse `
@@ -334,6 +307,59 @@ Describe 'Interactive Arc Registration Behavior' {
 
         ($null -eq $result.PSObject.Properties['PauseRequested']) |
             Should Be $true
+    }
+
+    It 'treats duplicate native work-item response as existing bootstrap' {
+        $hook = New-ArcQueueHook -Responses @(
+            (New-ArcRemoteResponse `
+                -OperationName 'Register-ArcNodeNativeBootstrapPrecheck' `
+                -Data @(
+                    (New-NativeBootstrapStatusResponse `
+                        -Status 'NotStarted')
+                )),
+
+            (New-ArcRemoteResponse `
+                -OperationName 'Register-ArcNodeNativeBootstrapStart' `
+                -Data @(
+                    (New-NativeBootstrapStartResponse `
+                        -AlreadyInProgress $true)
+                )),
+
+            (New-ArcRemoteResponse `
+                -OperationName 'Register-ArcNodeNativeBootstrapStatus' `
+                -Data @(
+                    (New-NativeBootstrapStatusResponse `
+                        -Status 'Succeeded')
+                )),
+
+            (New-ArcRemoteResponse `
+                -OperationName 'RemoveNativeArcBootstrapConfiguration')
+        )
+
+        $context = New-ArcTestContext `
+            -RemoteCommandInvoker $hook `
+            -Mode 'InteractiveDeviceCode' `
+            -AllowRegistration $true `
+            -AllowDeviceCodeRegistration $true
+
+        $context.State.approvedOperations[
+            '1.4.TESTHCN01.NativeAzureLocalArcBootstrap'
+        ] = @{
+            ApprovedAt = [datetime]::UtcNow.ToString('o')
+            ApprovedBy = 'Pester'
+        }
+
+        $result = & $registerArcPath `
+            -Context $context
+
+        $result.Passed |
+            Should Be $true
+
+        $result.Outcome |
+            Should Be 'Changed'
+
+        $result.BootstrapStatus |
+            Should Be 'Succeeded'
     }
 
     It 'resumes an existing native session without starting bootstrap again' {
@@ -412,19 +438,15 @@ Describe 'Interactive Arc Registration Behavior' {
             (New-ArcRemoteResponse `
                 -OperationName 'Register-ArcNodeNativeBootstrapStart' `
                 -Data @(
-                    [pscustomobject]@{
-                        AgentPath = (
-                            'C:\Program Files\AzureConnectedMachineAgent\' +
-                            'azcmagent.exe'
-                        )
-                        BootstrapConfigPath = (
-                            'C:\Windows\Temp\' +
-                            'NativeArcBootstrap-TESTHCN01.json'
-                        )
-                        RawBootstrapStatus = New-NativeBootstrapRawStatus `
-                            -Status 'InProgress' `
-                            -RebootPending $true
-                    }
+                    (New-NativeBootstrapStartResponse)
+                )),
+
+            (New-ArcRemoteResponse `
+                -OperationName 'Register-ArcNodeNativeBootstrapStatus' `
+                -Data @(
+                    (New-NativeBootstrapStatusResponse `
+                        -Status 'InProgress' `
+                        -RebootPending $true)
                 ))
         )
 
@@ -461,6 +483,44 @@ Describe 'Interactive Arc Registration Behavior' {
 
         $result.NativeBootstrapRebootPending |
             Should Be $true
+    }
+
+    It 'requires a fresh retry approval after device-code expiration' {
+        $hook = New-ArcQueueHook -Responses @(
+            (New-ArcRemoteResponse `
+                -OperationName 'Register-ArcNodeNativeBootstrapPrecheck' `
+                -Data @(
+                    (New-NativeBootstrapStatusResponse `
+                        -Status 'Failed' `
+                        -ErrorMessage (
+                            'Authentication to Azure Arc failed. ' +
+                            'Verification code expired.'
+                        ))
+                ))
+        )
+
+        $context = New-ArcTestContext `
+            -RemoteCommandInvoker $hook `
+            -Mode 'InteractiveDeviceCode' `
+            -AllowRegistration $true `
+            -AllowDeviceCodeRegistration $true
+
+        $result = & $registerArcPath `
+            -Context $context
+
+        $result.Passed |
+            Should Be $false
+
+        $result.Outcome |
+            Should Be 'Blocked'
+
+        $result.RequiresApproval |
+            Should Be $true
+
+        $result.ApprovalKey |
+            Should Be (
+                '1.4.TESTHCN01.NativeAzureLocalArcBootstrap.DeviceCodeRetry'
+            )
     }
 
     It 'blocks automatic retry when native bootstrap is already failed' {
@@ -517,6 +577,9 @@ Describe 'Interactive Arc Registration Behavior' {
 
         $registrationContent |
             Should Match 'Write-NativeBootstrapDeviceCode'
+
+        $registrationContent |
+            Should Match 'Set-Clipboard'
 
         $registrationContent |
             Should Match 'native_bootstrap_session_timeout_minutes'

@@ -92,8 +92,36 @@ function ConvertTo-NativeBootstrapResult {
         $result -is [System.Collections.IEnumerable] -and
         $result -isnot [string]
     ) {
-        $result = @($result) |
+        $statusCandidates = @(
+            foreach ($candidate in @($result)) {
+                if ($null -eq $candidate) {
+                    continue
+                }
+
+                if (
+                    $candidate -is [System.Collections.IDictionary] -and
+                    $candidate.Contains('Response')
+                ) {
+                    $candidate
+                    continue
+                }
+
+                if (
+                    $candidate -isnot [System.Collections.IDictionary] -and
+                    $null -ne $candidate.PSObject.Properties['Response']
+                ) {
+                    $candidate
+                }
+            }
+        )
+
+        $result = $statusCandidates |
             Select-Object -Last 1
+
+        if ($null -eq $result) {
+            $result = @($InputObject) |
+                Select-Object -Last 1
+        }
     }
 
     if ($result -is [string]) {
@@ -368,6 +396,132 @@ $nodeStateResponse = Invoke-ManagementPlaneCommand `
             return $null
         }
 
+                function ConvertTo-NativeBootstrapSummary {
+            param(
+                [AllowNull()]
+                [object]$InputObject
+            )
+
+            if ($null -eq $InputObject) {
+                return [pscustomobject]@{
+                    Status = 'Unknown'
+                    ErrorMessage = $null
+                    RebootPending = $false
+                }
+            }
+
+            $result = $InputObject
+
+            if (
+                $result -is [System.Collections.IEnumerable] -and
+                $result -isnot [string]
+            ) {
+                $statusCandidates = @(
+                    foreach ($candidate in @($result)) {
+                        if ($null -eq $candidate) {
+                            continue
+                        }
+
+                        if (
+                            $candidate -is [System.Collections.IDictionary] -and
+                            $candidate.Contains('Response')
+                        ) {
+                            $candidate
+                            continue
+                        }
+
+                        if (
+                            $candidate -isnot [System.Collections.IDictionary] -and
+                            $null -ne $candidate.PSObject.Properties['Response']
+                        ) {
+                            $candidate
+                        }
+                    }
+                )
+
+                $result = $statusCandidates |
+                    Select-Object -Last 1
+
+                if ($null -eq $result) {
+                    $result = @($InputObject) |
+                        Select-Object -Last 1
+                }
+            }
+
+            if ($result -is [string]) {
+                try {
+                    $result = $result |
+                        ConvertFrom-Json `
+                            -ErrorAction Stop
+                }
+                catch {
+                    return [pscustomobject]@{
+                        Status = 'Unknown'
+                        ErrorMessage = $_.Exception.Message
+                        RebootPending = $false
+                    }
+                }
+            }
+
+            $response = Get-RemoteValue `
+                -Object $result `
+                -Name 'Response'
+
+            if ($null -eq $response) {
+                $response = $result
+            }
+
+            $details = @(
+                @(
+                    Get-RemoteValue `
+                        -Object $response `
+                        -Name 'DetailedResponse'
+                ) |
+                    ForEach-Object {
+                        [pscustomobject]@{
+                            Status = [string](
+                                Get-RemoteValue `
+                                    -Object $_ `
+                                    -Name 'Status'
+                            )
+                        }
+                    }
+            )
+
+            $errors = @(
+                @(
+                    Get-RemoteValue `
+                        -Object $response `
+                        -Name 'Errors'
+                ) |
+                    ForEach-Object {
+                        [string](
+                            Get-RemoteValue `
+                                -Object $_ `
+                                -Name 'ErrorMessage'
+                        )
+                    } |
+                    Where-Object {
+                        -not [string]::IsNullOrWhiteSpace($_)
+                    }
+            ) -join '; '
+
+            return [pscustomobject]@{
+                Status = [string](
+                    Get-RemoteValue `
+                        -Object $response `
+                        -Name 'Status'
+                )
+                ErrorMessage = $errors
+                RebootPending = @(
+                    $details |
+                        Where-Object {
+                            $_.Status -eq 'RebootPending'
+                        }
+                ).Count -gt 0
+            }
+        }
+
         $agentPath = Resolve-AgentPath `
             -ExpectedPath $ExpectedAgentPath
 
@@ -393,27 +547,41 @@ $nodeStateResponse = Invoke-ManagementPlaneCommand `
             }
         }
 
-        $statusCommand = Get-Command `
-            -Name Get-ArcBootstrapStatus `
-            -ErrorAction SilentlyContinue
+                $statusCommand = Get-Command `
+                    -Name Get-ArcBootstrapStatus `
+                    -ErrorAction SilentlyContinue
 
-        $rawBootstrapStatus = $null
-        $bootstrapError = $null
+                $nativeBootstrapSummary = [pscustomobject]@{
+                    Status = 'Unavailable'
+                    ErrorMessage = $null
+                    RebootPending = $false
+                }
 
-        if ($null -ne $statusCommand) {
-            try {
-                $rawBootstrapStatus = Get-ArcBootstrapStatus `
-                    -ErrorAction Stop
-            }
-            catch {
-                $bootstrapError = $_.Exception.Message
-            }
-        }
-        else {
-            $bootstrapError = (
-                'Get-ArcBootstrapStatus is unavailable on the target node.'
-            )
-        }
+                if ($null -ne $statusCommand) {
+                    try {
+                        $nativeBootstrapSummary = ConvertTo-NativeBootstrapSummary `
+                            -InputObject (
+                                Get-ArcBootstrapStatus `
+                                    -ErrorAction Stop
+                            )
+                    }
+                    catch {
+                        $nativeBootstrapSummary = [pscustomobject]@{
+                            Status = 'Unknown'
+                            ErrorMessage = $_.Exception.Message
+                            RebootPending = $false
+                        }
+                    }
+                }
+                else {
+                    $nativeBootstrapSummary = [pscustomobject]@{
+                        Status = 'Unavailable'
+                        ErrorMessage = (
+                            'Get-ArcBootstrapStatus is unavailable on the target node.'
+                        )
+                        RebootPending = $false
+                    }
+                }
 
         [pscustomobject]@{
             AgentPresent = -not [string]::IsNullOrWhiteSpace($agentPath)
@@ -436,8 +604,12 @@ $nodeStateResponse = Invoke-ManagementPlaneCommand `
                     -Object $agentShowObject `
                     -Name 'resourceId'
             )
-            RawBootstrapStatus = $rawBootstrapStatus
-            BootstrapError = $bootstrapError
+            
+            NativeBootstrapStatus = $nativeBootstrapSummary.Status
+            NativeBootstrapError = $nativeBootstrapSummary.ErrorMessage
+            NativeBootstrapRebootPending = (
+                $nativeBootstrapSummary.RebootPending
+            )
         }
     }
 
@@ -459,15 +631,10 @@ if ($nodeState.HimdsStatus -ne 'Running') {
     )
 }
 
-$nativeBootstrapStatus = ConvertTo-NativeBootstrapResult `
-    -InputObject $nodeState.RawBootstrapStatus
-
-if (
-    -not [string]::IsNullOrWhiteSpace(
-        [string]$nodeState.BootstrapError
-    )
-) {
-    $nativeBootstrapStatus.ErrorMessage = [string]$nodeState.BootstrapError
+$nativeBootstrapStatus = [pscustomobject]@{
+    Status = [string]$nodeState.NativeBootstrapStatus
+    ErrorMessage = [string]$nodeState.NativeBootstrapError
+    RebootPending = [bool]$nodeState.NativeBootstrapRebootPending
 }
 
 if ($nativeBootstrapStatus.RebootPending) {
