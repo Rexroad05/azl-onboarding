@@ -98,6 +98,7 @@ function New-NativeBootstrapStartResponse {
             'NativeArcBootstrap-TESTHCN01.json'
         )
         AlreadyInProgress = $AlreadyInProgress
+        AuthorizationDelegated = $true
     }
 }
 
@@ -153,6 +154,15 @@ function New-ArcTestContext {
         StageId = 4
         Operation = 'Register-ArcNode'
         State = $state
+        NativeArcAuthorization = @{
+            ArmAccessToken = (
+                ConvertTo-SecureString `
+                    -String 'PesterEphemeralArmToken' `
+                    -AsPlainText `
+                    -Force
+            )
+            AccountId = 'pester@example.us'
+        }
         Node = [pscustomobject]@{
             name = 'TESTHCN01'
             node_number = '01'
@@ -306,6 +316,12 @@ Describe 'Interactive Arc Registration Behavior' {
             Should Be 'Succeeded'
 
         ($null -eq $result.PSObject.Properties['PauseRequested']) |
+            Should Be $true
+
+        ($null -eq $result.PSObject.Properties['ArmAccessToken']) |
+            Should Be $true
+
+        ($null -eq $result.PSObject.Properties['AccountId']) |
             Should Be $true
     }
 
@@ -523,6 +539,51 @@ Describe 'Interactive Arc Registration Behavior' {
             )
     }
 
+    It 'treats historical native Succeeded state without agent identity as reset state' {
+        $hook = New-ArcQueueHook -Responses @(
+            (New-ArcRemoteResponse `
+                -OperationName 'Register-ArcNodeNativeBootstrapPrecheck' `
+                -Data @(
+                    (New-NativeBootstrapStatusResponse `
+                        -Status 'Succeeded')
+                )),
+
+            (New-ArcRemoteResponse `
+                -OperationName 'Register-ArcNodeAgentRegistrationInspection' `
+                -Data @(
+                    [pscustomobject]@{
+                        AgentPresent = $false
+                        AgentPath = $null
+                        AgentStatus = $null
+                        ResourceId = $null
+                        SubscriptionId = $null
+                        ResourceGroup = $null
+                    }
+                ))
+        )
+
+        $context = New-ArcTestContext `
+            -RemoteCommandInvoker $hook `
+            -Mode 'InteractiveDeviceCode' `
+            -AllowRegistration $true `
+            -AllowDeviceCodeRegistration $true
+
+        $result = & $registerArcPath `
+            -Context $context
+
+        $result.Passed |
+            Should Be $false
+
+        $result.Outcome |
+            Should Be 'Blocked'
+
+        $result.RequiresApproval |
+            Should Be $true
+
+        $result.ApprovalKey |
+            Should Be '1.4.TESTHCN01.NativeAzureLocalArcBootstrap'
+    }
+
     It 'blocks automatic retry when native bootstrap is already failed' {
         $hook = New-ArcQueueHook -Responses @(
             (New-ArcRemoteResponse `
@@ -559,7 +620,45 @@ Describe 'Interactive Arc Registration Behavior' {
             Should Be 'Collect-ArcBootstrapSupportLogs'
     }
 
-    It 'contains same-console native session polling without device-code persistence' {
+    It 'uses execution-host ARM token delegation without token persistence' {
+        $registrationContent = Get-TestFileContent `
+            -RelativePath 'azure\registration\Register-ArcNode.ps1'
+
+        $registrationContent |
+            Should Match 'Get-ExecutionHostArmAuthorization'
+
+        $registrationContent |
+            Should Match 'Get-AzAccessToken'
+
+        $registrationContent |
+            Should Match 'Convert-SecureTokenToPlainText'
+
+        $registrationContent |
+            Should Match 'ArmAccessToken = \$PlainAccessToken'
+
+        $registrationContent |
+            Should Match 'AccountId = \$AccountId'
+
+        $registrationContent |
+            Should Match 'SetAccessRuleProtection'
+
+        $registrationContent |
+            Should Match 'BUILTIN\\Administrators'
+
+        $registrationContent |
+            Should Match 'Remove-Item'
+
+        $registrationContent |
+            Should Not Match 'DeviceCodeUserCode'
+
+        $registrationContent |
+            Should Not Match 'DeviceCodeVerificationUri'
+
+        $registrationContent |
+            Should Not Match 'DeviceCodeExpiresOn'
+    }
+
+    It 'contains same-console native session polling and clipboard support' {
         $registrationContent = Get-TestFileContent `
             -RelativePath 'azure\registration\Register-ArcNode.ps1'
 
@@ -583,14 +682,5 @@ Describe 'Interactive Arc Registration Behavior' {
 
         $registrationContent |
             Should Match 'native_bootstrap_session_timeout_minutes'
-
-        $registrationContent |
-            Should Not Match 'DeviceCodeUserCode'
-
-        $registrationContent |
-            Should Not Match 'DeviceCodeVerificationUri'
-
-        $registrationContent |
-            Should Not Match 'DeviceCodeExpiresOn'
     }
 }

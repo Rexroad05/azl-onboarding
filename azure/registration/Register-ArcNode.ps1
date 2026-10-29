@@ -10,6 +10,7 @@ $ErrorActionPreference = 'Stop'
 
 Import-Module "$PSScriptRoot\..\..\bootstrap\os\HcnEnsure.Common.psm1" -Force
 Import-Module "$PSScriptRoot\..\..\preflight\ManagementPlane.Common.psm1" -Force
+Import-Module Az.Accounts -ErrorAction Stop
 
 function Get-ArcValue {
     param(
@@ -119,6 +120,131 @@ function Test-ApprovedOperation {
     return (
         $null -ne $approvedOperations.PSObject.Properties[$ApprovalKey]
     )
+}
+
+function Get-ExecutionHostArmAuthorization {
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$Context,
+
+        [Parameter(Mandatory)]
+        [string]$TenantId,
+
+        [Parameter(Mandatory)]
+        [string]$SubscriptionId
+    )
+
+    $contextAuthorization = Get-ObjectValue `
+        -Object $Context `
+        -Name 'NativeArcAuthorization'
+
+    if ($null -ne $contextAuthorization) {
+        $contextToken = Get-ObjectValue `
+            -Object $contextAuthorization `
+            -Name 'ArmAccessToken'
+
+        $contextAccountId = [string](
+            Get-ObjectValue `
+                -Object $contextAuthorization `
+                -Name 'AccountId'
+        )
+
+        if (
+            $null -ne $contextToken -and
+            -not [string]::IsNullOrWhiteSpace($contextAccountId)
+        ) {
+            return [pscustomobject]@{
+                ArmAccessToken = $contextToken
+                AccountId = $contextAccountId
+                Source = 'RuntimeContext'
+            }
+        }
+    }
+
+    $azContext = Get-AzContext `
+        -ErrorAction SilentlyContinue
+
+    if ($null -eq $azContext) {
+        throw (
+            'Azure PowerShell context is unavailable. Complete Azure Government ' +
+            'device authentication before native Arc registration.'
+        )
+    }
+
+    if ($azContext.Environment.Name -ne 'AzureUSGovernment') {
+        throw (
+            'Azure PowerShell environment mismatch. Expected AzureUSGovernment; ' +
+            "current environment is $($azContext.Environment.Name)."
+        )
+    }
+
+    if ($azContext.Tenant.Id -ne $TenantId) {
+        throw (
+            "Azure PowerShell tenant mismatch. Expected $TenantId; current " +
+            "tenant is $($azContext.Tenant.Id)."
+        )
+    }
+
+    if ($azContext.Subscription.Id -ne $SubscriptionId) {
+        throw (
+            "Azure PowerShell subscription mismatch. Expected $SubscriptionId; " +
+            "current subscription is $($azContext.Subscription.Id)."
+        )
+    }
+
+    if ([string]::IsNullOrWhiteSpace([string]$azContext.Account.Id)) {
+        throw 'Azure PowerShell context does not contain an account identifier.'
+    }
+
+    $accessToken = Get-AzAccessToken `
+        -AsSecureString `
+        -ErrorAction Stop
+
+    if ($null -eq $accessToken.Token) {
+        throw 'Azure PowerShell did not return an ARM access token.'
+    }
+
+    return [pscustomobject]@{
+        ArmAccessToken = $accessToken.Token
+        AccountId = [string]$azContext.Account.Id
+        Source = 'AzContext'
+    }
+}
+
+function Convert-SecureTokenToPlainText {
+    param(
+        [Parameter(Mandatory)]
+        [object]$Token
+    )
+
+    if ($Token -is [string]) {
+        return [string]$Token
+    }
+
+    if ($Token -isnot [System.Security.SecureString]) {
+        throw (
+            'ARM access token must be a SecureString or plaintext string runtime value.'
+        )
+    }
+
+    $bstr = [IntPtr]::Zero
+
+    try {
+        $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR(
+            $Token
+        )
+
+        return [Runtime.InteropServices.Marshal]::PtrToStringBSTR(
+            $bstr
+        )
+    }
+    finally {
+        if ($bstr -ne [IntPtr]::Zero) {
+            [Runtime.InteropServices.Marshal]::ZeroFreeBSTR(
+                $bstr
+            )
+        }
+    }
 }
 
 function Get-PendingNativeArcSession {
@@ -497,198 +623,260 @@ function Start-NativeBootstrap {
         [string]$Cloud,
 
         [Parameter(Mandatory)]
-        [string]$NodeName
+        [string]$NodeName,
+
+        [Parameter(Mandatory)]
+        [object]$ArmAccessToken,
+
+        [Parameter(Mandatory)]
+        [string]$AccountId
     )
 
-    $response = Invoke-ManagementPlaneCommand `
-        -Context $Context `
-        -OperationName 'Register-ArcNodeNativeBootstrapStart' `
-        -ArgumentList @(
-            $AgentCommand,
-            $ExpectedAgentPath,
-            $HimdsServiceName,
-            $TenantId,
-            $SubscriptionId,
-            $ResourceGroup,
-            $Location,
-            $Cloud,
-            $NodeName
-        ) `
-        -ScriptBlock {
-            param(
-                [string]$AgentCommand,
-                [string]$ExpectedAgentPath,
-                [string]$HimdsServiceName,
-                [string]$TenantId,
-                [string]$SubscriptionId,
-                [string]$ResourceGroup,
-                [string]$Location,
-                [string]$Cloud,
-                [string]$NodeName
-            )
+    $plainAccessToken = Convert-SecureTokenToPlainText `
+        -Token $ArmAccessToken
 
-            function Resolve-AgentPath {
+    try {
+        $response = Invoke-ManagementPlaneCommand `
+            -Context $Context `
+            -OperationName 'Register-ArcNodeNativeBootstrapStart' `
+            -ArgumentList @(
+                $AgentCommand,
+                $ExpectedAgentPath,
+                $HimdsServiceName,
+                $TenantId,
+                $SubscriptionId,
+                $ResourceGroup,
+                $Location,
+                $Cloud,
+                $NodeName,
+                $plainAccessToken,
+                $AccountId
+            ) `
+            -ScriptBlock {
                 param(
-                    [AllowNull()]
-                    [string]$ExpectedPath
+                    [string]$AgentCommand,
+                    [string]$ExpectedAgentPath,
+                    [string]$HimdsServiceName,
+                    [string]$TenantId,
+                    [string]$SubscriptionId,
+                    [string]$ResourceGroup,
+                    [string]$Location,
+                    [string]$Cloud,
+                    [string]$NodeName,
+                    [string]$PlainAccessToken,
+                    [string]$AccountId
                 )
 
-                $candidatePaths = @(
-                    $ExpectedPath
-                    "$env:ProgramW6432\AzureConnectedMachineAgent\azcmagent.exe"
-                    "$env:ProgramFiles\AzureConnectedMachineAgent\azcmagent.exe"
-                ) |
-                    Where-Object {
-                        -not [string]::IsNullOrWhiteSpace($_)
-                    } |
-                    Select-Object -Unique
+                function Resolve-AgentPath {
+                    param(
+                        [AllowNull()]
+                        [string]$ExpectedPath
+                    )
 
-                foreach ($candidatePath in $candidatePaths) {
+                    $candidatePaths = @(
+                        $ExpectedPath
+                        "$env:ProgramW6432\AzureConnectedMachineAgent\azcmagent.exe"
+                        "$env:ProgramFiles\AzureConnectedMachineAgent\azcmagent.exe"
+                    ) |
+                        Where-Object {
+                            -not [string]::IsNullOrWhiteSpace($_)
+                        } |
+                        Select-Object -Unique
+
+                    foreach ($candidatePath in $candidatePaths) {
+                        if (
+                            Test-Path `
+                                -LiteralPath $candidatePath `
+                                -PathType Leaf
+                        ) {
+                            return $candidatePath
+                        }
+                    }
+
+                    $agent = Get-Command `
+                        -Name "$AgentCommand.exe", $AgentCommand `
+                        -ErrorAction SilentlyContinue |
+                        Select-Object -First 1
+
+                    if ($null -ne $agent) {
+                        return [string]$agent.Source
+                    }
+
+                    return $null
+                }
+
+                foreach ($commandName in @(
+                    'Start-ArcBootstrap'
+                    'Get-ArcBootstrapStatus'
+                )) {
                     if (
-                        Test-Path `
-                            -LiteralPath $candidatePath `
-                            -PathType Leaf
+                        $null -eq (
+                            Get-Command `
+                                -Name $commandName `
+                                -ErrorAction SilentlyContinue
+                        )
                     ) {
-                        return $candidatePath
+                        throw (
+                            "Native Azure Local Arc command $commandName is unavailable."
+                        )
                     }
                 }
 
-                $agent = Get-Command `
-                    -Name "$AgentCommand.exe", $AgentCommand `
-                    -ErrorAction SilentlyContinue |
-                    Select-Object -First 1
+                $agentPath = Resolve-AgentPath `
+                    -ExpectedPath $ExpectedAgentPath
 
-                if ($null -ne $agent) {
-                    return [string]$agent.Source
+                if ([string]::IsNullOrWhiteSpace($agentPath)) {
+                    throw 'Azure Connected Machine agent executable was not found.'
                 }
 
-                return $null
-            }
-
-            foreach ($commandName in @(
-                'Start-ArcBootstrap'
-                'Get-ArcBootstrapStatus'
-            )) {
-                if (
-                    $null -eq (
-                        Get-Command `
-                            -Name $commandName `
-                            -ErrorAction SilentlyContinue
-                    )
-                ) {
-                    throw (
-                        "Native Azure Local Arc command $commandName is unavailable."
-                    )
-                }
-            }
-
-            $agentPath = Resolve-AgentPath `
-                -ExpectedPath $ExpectedAgentPath
-
-            if ([string]::IsNullOrWhiteSpace($agentPath)) {
-                throw 'Azure Connected Machine agent executable was not found.'
-            }
-
-            $himds = Get-Service `
-                -Name $HimdsServiceName `
-                -ErrorAction Stop
-
-            if ($himds.Status -ne 'Running') {
-                throw (
-                    "HIMDS service $HimdsServiceName is $($himds.Status); " +
-                    'expected Running.'
-                )
-            }
-
-            $bootstrapConfigPath = Join-Path `
-                $env:TEMP `
-                (
-                    "NativeArcBootstrap-$NodeName-" +
-                    (Get-Date -Format 'yyyyMMdd-HHmmss') +
-                    '.json'
-                )
-
-            $bootstrapConfiguration = @{
-                ArcConfiguration = @{
-                    ArcMultiServerConfiguration = @{
-                        ResourceGroup = $ResourceGroup
-                        TenantId = $TenantId
-                        Location = $Location
-                        SubscriptionId = $SubscriptionId
-                        Cloud = $Cloud
-                        GatewayId = $null
-                        ArmAccessToken = $null
-                        AccountId = $null
-                        AzureLocalCloudFQDN = $null
-                        AuthenticationScope = $null
-                        AuthorityHost = $null
-                    }
-                }
-            }
-
-            $bootstrapConfiguration |
-                ConvertTo-Json -Depth 8 |
-                Set-Content `
-                    -LiteralPath $bootstrapConfigPath `
-                    -Encoding utf8
-
-            try {
-                $null = Start-ArcBootstrap `
-                    -ConfigFilePath $bootstrapConfigPath `
+                $himds = Get-Service `
+                    -Name $HimdsServiceName `
                     -ErrorAction Stop
 
-                return [pscustomobject]@{
-                    AgentPath = $agentPath
-                    BootstrapConfigPath = $bootstrapConfigPath
-                    AlreadyInProgress = $false
+                if ($himds.Status -ne 'Running') {
+                    throw (
+                        "HIMDS service $HimdsServiceName is $($himds.Status); " +
+                        'expected Running.'
+                    )
                 }
-            }
-            catch {
-                $startError = $_.Exception.Message
 
-                Remove-Item `
+                $bootstrapConfigPath = Join-Path `
+                    $env:TEMP `
+                    (
+                        "NativeArcBootstrap-$NodeName-" +
+                        (Get-Date -Format 'yyyyMMdd-HHmmss') +
+                        '.json'
+                    )
+
+                $bootstrapConfiguration = @{
+                    ArcConfiguration = @{
+                        ArcMultiServerConfiguration = @{
+                            ResourceGroup = $ResourceGroup
+                            TenantId = $TenantId
+                            Location = $Location
+                            SubscriptionId = $SubscriptionId
+                            Cloud = $Cloud
+                            GatewayId = $null
+                            ArmAccessToken = $PlainAccessToken
+                            AccountId = $AccountId
+                            AzureLocalCloudFQDN = $null
+                            AuthenticationScope = $null
+                            AuthorityHost = $null
+                        }
+                    }
+                }
+
+                $bootstrapConfiguration |
+                    ConvertTo-Json -Depth 8 |
+                    Set-Content `
+                        -LiteralPath $bootstrapConfigPath `
+                        -Encoding utf8
+
+                $acl = Get-Acl `
+                    -LiteralPath $bootstrapConfigPath
+
+                $acl.SetAccessRuleProtection(
+                    $true,
+                    $false
+                )
+
+                $systemRule = New-Object `
+                    System.Security.AccessControl.FileSystemAccessRule(
+                        'SYSTEM',
+                        'FullControl',
+                        'Allow'
+                    )
+
+                $administratorsRule = New-Object `
+                    System.Security.AccessControl.FileSystemAccessRule(
+                        'BUILTIN\Administrators',
+                        'FullControl',
+                        'Allow'
+                    )
+
+                $acl.AddAccessRule($systemRule)
+                $acl.AddAccessRule($administratorsRule)
+
+                Set-Acl `
                     -LiteralPath $bootstrapConfigPath `
-                    -Force `
-                    -ErrorAction SilentlyContinue
+                    -AclObject $acl
 
-                if (
-                    $startError -match
-                    '(?i)workitem\s+already\s+submi\w*\s+with\s+different\s+taskid'
-                ) {
+                try {
+                    $null = Start-ArcBootstrap `
+                        -ConfigFilePath $bootstrapConfigPath `
+                        -ErrorAction Stop
+
+                    Remove-Item `
+                        -LiteralPath $bootstrapConfigPath `
+                        -Force `
+                        -ErrorAction SilentlyContinue
+
                     return [pscustomobject]@{
                         AgentPath = $agentPath
                         BootstrapConfigPath = $null
-                        AlreadyInProgress = $true
+                        AlreadyInProgress = $false
+                        AuthorizationDelegated = $true
                     }
                 }
+                catch {
+                    $startError = $_.Exception.Message
 
-                throw
+                    Remove-Item `
+                        -LiteralPath $bootstrapConfigPath `
+                        -Force `
+                        -ErrorAction SilentlyContinue
+
+                    if (
+                        $startError -match
+                        '(?i)workitem\s+already\s+submi\w*\s+with\s+different\s+taskid'
+                    ) {
+                        return [pscustomobject]@{
+                            AgentPath = $agentPath
+                            BootstrapConfigPath = $null
+                            AlreadyInProgress = $true
+                            AuthorizationDelegated = $true
+                        }
+                    }
+
+                    throw
+                }
+                finally {
+                    $PlainAccessToken = $null
+                }
             }
+
+        $data = @($response.Data) |
+            Select-Object -First 1
+
+        if ($null -eq $data) {
+            throw 'Native Azure Local bootstrap start returned no data.'
         }
 
-    $data = @($response.Data) |
-        Select-Object -First 1
-
-    if ($null -eq $data) {
-        throw 'Native Azure Local bootstrap start returned no data.'
+        return [pscustomobject]@{
+            AgentPath = [string](
+                Get-ObjectValue `
+                    -Object $data `
+                    -Name 'AgentPath'
+            )
+            BootstrapConfigPath = [string](
+                Get-ObjectValue `
+                    -Object $data `
+                    -Name 'BootstrapConfigPath'
+            )
+            AlreadyInProgress = [bool](
+                Get-ObjectValue `
+                    -Object $data `
+                    -Name 'AlreadyInProgress'
+            )
+            AuthorizationDelegated = [bool](
+                Get-ObjectValue `
+                    -Object $data `
+                    -Name 'AuthorizationDelegated'
+            )
+        }
     }
-
-    return [pscustomobject]@{
-        AgentPath = [string](
-            Get-ObjectValue `
-                -Object $data `
-                -Name 'AgentPath'
-        )
-        BootstrapConfigPath = [string](
-            Get-ObjectValue `
-                -Object $data `
-                -Name 'BootstrapConfigPath'
-        )
-        AlreadyInProgress = [bool](
-            Get-ObjectValue `
-                -Object $data `
-                -Name 'AlreadyInProgress'
-        )
+    finally {
+        $plainAccessToken = $null
     }
 }
 
@@ -1652,20 +1840,148 @@ if (
             SupportLogCommand = 'Collect-ArcBootstrapSupportLogs'
         }
 }
-
 if ($currentNativeStatus -eq 'Succeeded') {
-    return New-HcnEnsureResult `
-        -Check 'Register-ArcNode' `
-        -Outcome 'AlreadyCompliant' `
-        -Summary (
-            "Native Azure Local Arc bootstrap already reports Succeeded for " +
-            "node $nodeName."
+    $agentRegistrationResponse = Invoke-ManagementPlaneCommand `
+        -Context $Context `
+        -OperationName 'Register-ArcNodeAgentRegistrationInspection' `
+        -ArgumentList @(
+            $expectedAgentPath,
+            $agentCommand
         ) `
-        -AdditionalProperties @{
-            Node = $nodeName
-            Workflow = 'NativeAzureLocalBootstrap'
-            BootstrapStatus = 'Succeeded'
+        -ScriptBlock {
+            param(
+                [string]$ExpectedAgentPath,
+                [string]$AgentCommand
+            )
+
+            $candidatePaths = @(
+                $ExpectedAgentPath
+                "$env:ProgramW6432\AzureConnectedMachineAgent\azcmagent.exe"
+                "$env:ProgramFiles\AzureConnectedMachineAgent\azcmagent.exe"
+            ) |
+                Where-Object {
+                    -not [string]::IsNullOrWhiteSpace($_)
+                } |
+                Select-Object -Unique
+
+            $agentPath = $null
+
+            foreach ($candidatePath in $candidatePaths) {
+                if (
+                    Test-Path `
+                        -LiteralPath $candidatePath `
+                        -PathType Leaf
+                ) {
+                    $agentPath = $candidatePath
+                    break
+                }
+            }
+
+            if ([string]::IsNullOrWhiteSpace($agentPath)) {
+                $agent = Get-Command `
+                    -Name "$AgentCommand.exe", $AgentCommand `
+                    -ErrorAction SilentlyContinue |
+                    Select-Object -First 1
+
+                if ($null -ne $agent) {
+                    $agentPath = [string]$agent.Source
+                }
+            }
+
+            $agentShow = $null
+            $agentShowObject = $null
+
+            if (-not [string]::IsNullOrWhiteSpace($agentPath)) {
+                $agentShow = @(
+                    & $agentPath show -j 2>&1
+                ) -join "`n"
+
+                try {
+                    $agentShowObject = $agentShow |
+                        ConvertFrom-Json `
+                            -ErrorAction Stop
+                }
+                catch {
+                    $agentShowObject = $null
+                }
+            }
+
+            [pscustomobject]@{
+                AgentPresent = -not [string]::IsNullOrWhiteSpace($agentPath)
+                AgentPath = $agentPath
+                AgentStatus = if ($null -ne $agentShowObject) {
+                    [string]$agentShowObject.status
+                }
+                else {
+                    $null
+                }
+                ResourceId = if ($null -ne $agentShowObject) {
+                    [string]$agentShowObject.resourceId
+                }
+                else {
+                    $null
+                }
+                SubscriptionId = if ($null -ne $agentShowObject) {
+                    [string]$agentShowObject.subscriptionId
+                }
+                else {
+                    $null
+                }
+                ResourceGroup = if ($null -ne $agentShowObject) {
+                    [string]$agentShowObject.resourceGroup
+                }
+                else {
+                    $null
+                }
+            }
         }
+
+    $agentRegistrationState = @(
+        $agentRegistrationResponse.Data
+    ) |
+        Select-Object -First 1
+
+    $agentCurrentlyRegistered = (
+        $agentRegistrationState.AgentPresent -and
+        $agentRegistrationState.AgentStatus -eq 'Connected' -and
+        -not [string]::IsNullOrWhiteSpace(
+            [string]$agentRegistrationState.ResourceId
+        ) -and
+        -not [string]::IsNullOrWhiteSpace(
+            [string]$agentRegistrationState.SubscriptionId
+        ) -and
+        -not [string]::IsNullOrWhiteSpace(
+            [string]$agentRegistrationState.ResourceGroup
+        )
+    )
+
+    if ($agentCurrentlyRegistered) {
+        return New-HcnEnsureResult `
+            -Check 'Register-ArcNode' `
+            -Outcome 'AlreadyCompliant' `
+            -Summary (
+                "Native Azure Local Arc bootstrap and Connected Machine agent " +
+                "both confirm current registration for node $nodeName."
+            ) `
+            -AdditionalProperties @{
+                Node = $nodeName
+                Workflow = 'NativeAzureLocalBootstrap'
+                BootstrapStatus = 'Succeeded'
+                AgentStatus = $agentRegistrationState.AgentStatus
+                AgentResourceId = $agentRegistrationState.ResourceId
+                AgentResourceGroup = $agentRegistrationState.ResourceGroup
+                AgentSubscriptionId = $agentRegistrationState.SubscriptionId
+            }
+    }
+
+    Write-Host (
+        "[$([datetime]::Now.ToString('HH:mm:ss'))] " +
+        "$nodeName | Native bootstrap reports historical Succeeded state, " +
+        'but no current Connected Machine agent identity exists. ' +
+        'Treating the node as reset and eligible for fresh registration.'
+    ) -ForegroundColor Yellow
+
+    $currentNativeStatus = 'NotStarted'
 }
 
 if ($currentNativeStatus -eq 'InProgress') {
@@ -1721,6 +2037,11 @@ if (-not (Test-ApprovedOperation -Context $Context -ApprovalKey $approvalKey)) {
         }
 }
 
+$armAuthorization = Get-ExecutionHostArmAuthorization `
+    -Context $Context `
+    -TenantId $tenantId `
+    -SubscriptionId $subscriptionId
+
 $startResult = Start-NativeBootstrap `
     -Context $Context `
     -AgentCommand $agentCommand `
@@ -1731,7 +2052,11 @@ $startResult = Start-NativeBootstrap `
     -ResourceGroup $resourceGroup `
     -Location $location `
     -Cloud $cloud `
-    -NodeName $nodeName
+    -NodeName $nodeName `
+    -ArmAccessToken $armAuthorization.ArmAccessToken `
+    -AccountId $armAuthorization.AccountId
+    
+$armAuthorization = $null
 
 $bootstrapStatus = Get-NativeBootstrapStatus `
     -Context $Context `

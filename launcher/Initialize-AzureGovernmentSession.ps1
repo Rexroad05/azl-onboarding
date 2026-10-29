@@ -70,7 +70,8 @@ if ($null -ne (Get-Command -Name az -ErrorAction SilentlyContinue)) {
             --only-show-errors `
             --output json
     ) -join "`n" |
-        ConvertFrom-Json -AsHashtable
+        ConvertFrom-Json `
+            -AsHashtable
 
     if ($azureCliCloud.name -ne 'AzureUSGovernment') {
         throw (
@@ -80,22 +81,45 @@ if ($null -ne (Get-Command -Name az -ErrorAction SilentlyContinue)) {
     }
 }
 
-Write-Host (
-    "[$([datetime]::Now.ToString('HH:mm:ss'))] " +
-    'Azure Government PowerShell device authentication is required.'
-) -ForegroundColor Yellow
+$existingContext = Get-AzContext `
+    -ErrorAction SilentlyContinue
 
-Write-Host (
-    'Complete device authentication using an approved Azure Government account ' +
-    "authorized in tenant $tenantId."
-) -ForegroundColor Yellow
+$contextReused = $false
 
-Connect-AzAccount `
-    -Environment AzureUSGovernment `
-    -Tenant $tenantId `
-    -UseDeviceAuthentication `
-    -SkipContextPopulation |
-    Out-Null
+if (
+    $null -ne $existingContext -and
+    $existingContext.Environment.Name -eq 'AzureUSGovernment' -and
+    $existingContext.Tenant.Id -eq $tenantId -and
+    $existingContext.Subscription.Id -eq $subscriptionId -and
+    -not [string]::IsNullOrWhiteSpace(
+        [string]$existingContext.Account.Id
+    )
+) {
+    $contextReused = $true
+
+    Write-Host (
+        "[$([datetime]::Now.ToString('HH:mm:ss'))] " +
+        'Reusing existing Azure Government PowerShell context.'
+    ) -ForegroundColor Cyan
+}
+else {
+    Write-Host (
+        "[$([datetime]::Now.ToString('HH:mm:ss'))] " +
+        'Azure Government PowerShell device authentication is required.'
+    ) -ForegroundColor Yellow
+
+    Write-Host (
+        'Complete device authentication using an approved Azure Government account ' +
+        "authorized in tenant $tenantId."
+    ) -ForegroundColor Yellow
+
+    Connect-AzAccount `
+        -Environment AzureUSGovernment `
+        -Tenant $tenantId `
+        -UseDeviceAuthentication `
+        -SkipContextPopulation |
+        Out-Null
+}
 
 Set-AzContext `
     -Subscription $subscriptionId `
@@ -140,12 +164,14 @@ if ($subscription.State -ne 'Enabled') {
     )
 }
 
+
 return [pscustomobject]@{
-    Passed         = $true
-    Cloud          = $azContext.Environment.Name
-    TenantId       = $azContext.Tenant.Id
+    Passed = $true
+    Cloud = $azContext.Environment.Name
+    TenantId = $azContext.Tenant.Id
     SubscriptionId = $azContext.Subscription.Id
-    AccountName    = $azContext.Account.Id
-    AccountType    = $azContext.Account.Type
-    ValidatedAt    = [datetime]::UtcNow.ToString('o')
+    AccountName = $azContext.Account.Id
+    AccountType = $azContext.Account.Type
+    ContextReused = $contextReused
+    ValidatedAt = [datetime]::UtcNow.ToString('o')
 }

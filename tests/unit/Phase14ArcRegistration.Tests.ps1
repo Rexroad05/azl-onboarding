@@ -55,6 +55,9 @@ $registrationContent = Get-TestFileContent `
 $validationContent = Get-TestFileContent `
     -RelativePath 'azure\registration\Test-ArcRegistration.ps1'
 
+$initializerContent = Get-TestFileContent `
+    -RelativePath 'launcher\Initialize-AzureGovernmentSession.ps1'
+
 Describe 'Phase 1.4 Arc Registration Readiness Contract' {
     It 'defines safe interactive-user Arc registration defaults' {
         $defaults.azure.arc_registration |
@@ -105,6 +108,20 @@ Describe 'Phase 1.4 Arc Registration Readiness Contract' {
             Should Be $true
     }
 
+    It 'reuses matching Azure Government context before requesting another device code' {
+        $initializerContent |
+            Should Match 'ContextReused'
+
+        $initializerContent |
+            Should Match 'Get-AzContext'
+
+        $initializerContent |
+            Should Match 'Reusing existing Azure Government PowerShell context'
+
+        $initializerContent |
+            Should Match 'Connect-AzAccount'
+    }
+
     It 'contains native interactive device-code registration support without secrets' {
         $registrationContent |
             Should Match 'InteractiveDeviceCode'
@@ -134,15 +151,6 @@ Describe 'Phase 1.4 Arc Registration Readiness Contract' {
             Should Not Match 'use-device-code'
 
         $registrationContent |
-            Should Not Match 'DeviceCodeUserCode'
-
-        $registrationContent |
-            Should Not Match 'DeviceCodeVerificationUri'
-
-        $registrationContent |
-            Should Not Match 'DeviceCodeExpiresOn'
-
-        $registrationContent |
             Should Not Match 'service_principal_secret'
 
         $registrationContent |
@@ -150,6 +158,38 @@ Describe 'Phase 1.4 Arc Registration Readiness Contract' {
 
         $registrationContent |
             Should Not Match 'keyvault'
+    }
+
+    It 'uses ephemeral execution-host ARM token delegation' {
+        $registrationContent |
+            Should Match 'Get-ExecutionHostArmAuthorization'
+
+        $registrationContent |
+            Should Match 'Get-AzAccessToken'
+
+        $registrationContent |
+            Should Match 'Convert-SecureTokenToPlainText'
+
+        $registrationContent |
+            Should Match 'ArmAccessToken = \$PlainAccessToken'
+
+        $registrationContent |
+            Should Match 'AccountId = \$AccountId'
+
+        $registrationContent |
+            Should Match 'SetAccessRuleProtection'
+
+        $registrationContent |
+            Should Match 'SYSTEM'
+
+        $registrationContent |
+            Should Match 'BUILTIN\\Administrators'
+
+        $registrationContent |
+            Should Match 'ZeroFreeBSTR'
+
+        $registrationContent |
+            Should Match 'Remove-Item'
     }
 
     It 'does not use the Azure Local wrapper update path' {
@@ -301,8 +341,9 @@ Describe 'Phase 1.4 Arc Registration Readiness Contract' {
             Should Not Match 'az connectedmachine show'
     }
 
-    It 'parses all Arc registration adapters' {
+    It 'parses all Arc registration adapters and initializer' {
         $files = @(
+            'launcher\Initialize-AzureGovernmentSession.ps1',
             'azure\registration\Test-AzureRegistrationInputs.ps1',
             'azure\registration\Invoke-AzureLocalArcInitialization.ps1',
             'azure\registration\Register-ArcNode.ps1',

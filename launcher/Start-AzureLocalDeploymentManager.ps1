@@ -26,6 +26,41 @@ $releaseVersion = Get-Content `
 
 $displayVersion = [string]$releaseVersion.displayVersion
 
+$script:ManagerSessionCredentialVariables = `
+    [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
+
+function Register-ManagerSessionCredentials {
+    param(
+        [AllowEmptyCollection()]
+        [string[]]$EnvironmentVariableNames
+    )
+
+    foreach ($environmentVariableName in @($EnvironmentVariableNames)) {
+        if (-not [string]::IsNullOrWhiteSpace($environmentVariableName)) {
+            [void]$script:ManagerSessionCredentialVariables.Add(
+                $environmentVariableName
+            )
+        }
+    }
+}
+
+function Clear-ManagerSessionCredentials {
+    foreach (
+        $environmentVariableName in
+        @($script:ManagerSessionCredentialVariables)
+    ) {
+        [Environment]::SetEnvironmentVariable(
+            $environmentVariableName,
+            $null,
+            'Process'
+        )
+    }
+
+    $script:ManagerSessionCredentialVariables.Clear()
+}
+
 if ([string]::IsNullOrWhiteSpace($displayVersion)) {
     $displayVersion = "v$($releaseVersion.releaseVersion)"
 }
@@ -692,7 +727,10 @@ function Invoke-FactoryAction {
         $session = & "$PSScriptRoot\Initialize-OperatorSession.ps1" `
             -RequireAddsCredentials:$credentialRequirements.RequireAddsCredentials `
             -RequireLocalAdministratorCredentials:$credentialRequirements.RequireLocalAdministratorCredentials `
-            -RequireDeploymentPassword:$requiresDeploymentPassword
+            -RequireDeploymentPassword:$requiresDeploymentPassword 
+        
+        Register-ManagerSessionCredentials `
+            -EnvironmentVariableNames $session.CreatedEnvironmentVariables
 
         $requiresAzureGovernmentAuthentication = (
             $Mode -ne 'Plan' -and
@@ -753,11 +791,6 @@ function Invoke-FactoryAction {
             @factoryParameters
     }
     finally {
-        if ($null -ne $session -and $null -ne $session.Cleanup) {
-            & $session.Cleanup `
-                $session.CreatedEnvironmentVariables
-        }
-
         Restore-WorkflowWinRmCertificateValidation `
             -State $certificateValidationState
     }
@@ -1386,6 +1419,8 @@ while ($true) {
         }
 
         '9' {
+            Clear-ManagerSessionCredentials
+
             Write-Host (
                 'Exiting Azure Local Deployment Manager.'
             ) -ForegroundColor Cyan

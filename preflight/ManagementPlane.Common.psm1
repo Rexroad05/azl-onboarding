@@ -582,6 +582,48 @@ function New-ManagementPlaneSession {
     }
 }
 
+function Protect-ManagementPlaneErrorMessage {
+    [CmdletBinding()]
+    param(
+        [AllowNull()]
+        [string]$Message,
+
+        [AllowEmptyCollection()]
+        [object[]]$SensitiveValues = @()
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Message)) {
+        return 'Remote management operation failed without a detailed error message.'
+    }
+
+    $sanitized = $Message
+
+    foreach ($value in @($SensitiveValues)) {
+        if (
+            $value -is [string] -and
+            -not [string]::IsNullOrWhiteSpace($value)
+        ) {
+            $sanitized = $sanitized.Replace(
+                $value,
+                '[REDACTED]'
+            )
+        }
+    }
+
+    $sanitized = $sanitized -replace `
+        '(?i)bearer\s+[a-z0-9\-_\.=]+',
+        'Bearer [REDACTED]'
+
+    $sanitized = $sanitized -replace `
+        '(?i)("ArmAccessToken"\s*:\s*")[^"]+',
+        '$1[REDACTED]'
+
+    $sanitized = $sanitized -replace `
+        '(?i)(arm[_-]?access[_-]?token|token)\s*[:=]\s*\S+',
+        '$1=[REDACTED]'
+
+    return $sanitized
+}
 function Invoke-ManagementPlaneCommand {
     [CmdletBinding()]
     param(
@@ -645,8 +687,20 @@ function Invoke-ManagementPlaneCommand {
             Data               = $data
         }
     }
-    catch {
-        throw "$OperationName failed. $($_.Exception.Message)"
+        catch {
+        $sensitiveArgumentValues = @(
+            $ArgumentList |
+                Where-Object {
+                    $_ -is [string] -and
+                    $_.Length -gt 32
+                }
+        )
+
+        $sanitizedError = Protect-ManagementPlaneErrorMessage `
+            -Message $_.Exception.Message `
+            -SensitiveValues $sensitiveArgumentValues
+
+        throw "$OperationName failed. $sanitizedError"
     }
     finally {
         if (
@@ -665,5 +719,6 @@ Export-ModuleMember -Function @(
     'Get-ManagementPlaneTarget',
     'Get-ManagementPlaneValue',
     'Invoke-ManagementPlaneCommand',
-    'New-ManagementPlaneSession'
+    'New-ManagementPlaneSession',
+    'Protect-ManagementPlaneErrorMessage'
 )

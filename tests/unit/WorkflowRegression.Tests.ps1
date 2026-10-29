@@ -42,6 +42,9 @@ $statusContent = Get-TestFileContent `
 $managerContent = Get-TestFileContent `
     -RelativePath 'launcher\Start-AzureLocalDeploymentManager.ps1'
 
+$initializerContent = Get-TestFileContent `
+    -RelativePath 'launcher\Initialize-AzureGovernmentSession.ps1'
+
 $approvalContent = Get-TestFileContent `
     -RelativePath 'launcher\Set-DeploymentApproval.ps1'
 
@@ -67,6 +70,7 @@ Describe 'Azure Local Factory Workflow Regression Suite' {
                 'controller\Invoke-NodeRebootAndReconnect.ps1',
                 'launcher\Set-DeploymentApproval.ps1',
                 'launcher\Get-DeploymentManagerStatus.ps1',
+                'launcher\Initialize-AzureGovernmentSession.ps1',
                 'launcher\Start-AzureLocalDeploymentManager.ps1',
                 'preflight\ManagementPlane.Common.psm1'
             )
@@ -305,6 +309,36 @@ Describe 'Azure Local Factory Workflow Regression Suite' {
         It 'blocks mutating operations in Validate mode' {
             $factoryContent |
                 Should Match 'Validate mode blocks mutating operation'
+        }
+    }
+
+    Context 'Azure Government authentication lifecycle' {
+        It 'parses the Azure Government session initializer' {
+            @(Get-TestParseErrors `
+                -RelativePath 'launcher\Initialize-AzureGovernmentSession.ps1').Count |
+                Should Be 0
+        }
+
+        It 'reuses matching Azure Government context rather than reprompting' {
+            $initializerContent |
+                Should Match 'ContextReused'
+
+            $initializerContent |
+                Should Match 'Get-AzContext'
+
+            $initializerContent |
+                Should Match 'Reusing existing Azure Government PowerShell context'
+
+            $initializerContent |
+                Should Match 'Connect-AzAccount'
+        }
+
+        It 'does not return an ARM token from the initializer result object' {
+            $initializerContent |
+                Should Not Match 'ArmAccessToken\s*='
+
+            $initializerContent |
+                Should Not Match 'ArmAccountId\s*='
         }
     }
 

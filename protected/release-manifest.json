@@ -1,6 +1,6 @@
 {
   "releaseVersion": "1.0.4",
-  "generatedAtUtc": "2026-10-29T14:22:01.1656794Z",
+  "generatedAtUtc": "2026-10-29T18:47:18.9223124Z",
   "files": [
     {
       "path": ".gitignore",
@@ -72,7 +72,7 @@
     },
     {
       "path": "azure/registration/Register-ArcNode.ps1",
-      "sha256": "E65DD17DCF6CA1A868CC3E3452AB189BE352E8BFAB643DDBA0444BDE812D2718"
+      "sha256": "6D863B7EC23CFC56D238218151F168784B61CAE22FF03EFEBEB3E15F3DF5B3D2"
     },
     {
       "path": "azure/registration/Test-ArcRegistration.ps1",
@@ -296,11 +296,11 @@
     },
     {
       "path": "launcher/Initialize-AzureGovernmentSession.ps1",
-      "sha256": "E0084AD6AE732335170E3E4BBB20121B8F4A4236274B311B0B476D6CCB01B43A"
+      "sha256": "9CE8D4C6EF2F7487B186846D37FC4FA0B129C75F661DE46912B16BF006A4C61F"
     },
     {
       "path": "launcher/Initialize-OperatorSession.ps1",
-      "sha256": "90A77183571808B8B4CFAE98F38A07576BA219AEBCED085D4AE477DE27B10FD9"
+      "sha256": "B0F16A5CECC5653AC527D224197ED6BE0AF19BC962D9F69C05025A74BC8C3F5D"
     },
     {
       "path": "launcher/Merge-FactoryConfiguration.ps1",
@@ -312,7 +312,7 @@
     },
     {
       "path": "launcher/Start-AzureLocalDeploymentManager.ps1",
-      "sha256": "1E347F855C9C68A43C00DC534E7ABF965CF4A8401AF15653D2450EE2261443A7"
+      "sha256": "F0B135F0EC5DD04483C119748D040A5B5C7DF0C4BBA65F4E4A8A16B234D27638"
     },
     {
       "path": "launcher/Start-ReadOnlyValidation.ps1",
@@ -332,7 +332,7 @@
     },
     {
       "path": "preflight/ManagementPlane.Common.psm1",
-      "sha256": "DEE50DC8C97D7C269D9468C4480EAE94E9AB8A00D98AB37E190DEA20E57B038E"
+      "sha256": "25191B169A2556BE39D1CD828D1914D060982787FD770C69BAF8BA0FBDE44BD9"
     },
     {
       "path": "preflight/Test-ActiveDirectoryConfiguration.ps1",
@@ -616,7 +616,7 @@
     },
     {
       "path": "tests/unit/ArcRegistrationBehavior.Tests.ps1",
-      "sha256": "AA62BD177A17CCD9F498DC2ADA48A4F3B4ABE0E35DAF378A7B8D4A4F6063ECCC"
+      "sha256": "AB93CA82E0A166F08F585B982553A4719C102F9A5937B131C33FB35F7A300688"
     },
     {
       "path": "tests/unit/Batch2BBehavior.Tests.ps1",
@@ -688,7 +688,7 @@
     },
     {
       "path": "tests/unit/Phase14ArcRegistration.Tests.ps1",
-      "sha256": "B9B4701678676A7AE76CE666F6F94898F3E61D72255236B0D5CAE2C0049A4D6D"
+      "sha256": "5FFA7550112F23ED39DE78054397ABB67C48ACA91728457B1849E4BBC5162E91"
     },
     {
       "path": "tests/unit/Phase21ClusterDeployment.Tests.ps1",
@@ -724,7 +724,7 @@
     },
     {
       "path": "tests/unit/WorkflowRegression.Tests.ps1",
-      "sha256": "8ED95BB505351F3D1DF6F19E5726891EBA948D00D743D71D49EA94C83CDC8403"
+      "sha256": "A1941DA3909ACF0C7E37DDF63E7601E4E931CE7FF2743876DD348E0622B9294F"
     },
     {
       "path": "tools/Invoke-LegacyWorkflowCleanup.ps1",
