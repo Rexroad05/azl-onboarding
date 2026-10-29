@@ -1066,6 +1066,10 @@ function Write-NativeBootstrapProgress {
             }
     ) -join '; '
 
+    if ([string]::IsNullOrWhiteSpace($summary)) {
+        $summary = "Bootstrap=$bootstrapStatusName"
+    }
+
     $signature = @(
         $steps |
             Sort-Object Name |
@@ -1073,6 +1077,10 @@ function Write-NativeBootstrapProgress {
                 "$($_.Name)=$($_.Status)"
             }
     ) -join '|'
+
+    if ([string]::IsNullOrWhiteSpace($signature)) {
+        $signature = "Bootstrap=$bootstrapStatusName"
+    }
 
     Write-Progress `
         -Id 42 `
@@ -1088,7 +1096,7 @@ function Write-NativeBootstrapProgress {
         CompletedStepCount = $completedStepCount
     }
 }
-Invoke-NativeBootstrapSession {
+function Invoke-NativeBootstrapSession {
     param(
         [Parameter(Mandatory)]
         [hashtable]$Context,

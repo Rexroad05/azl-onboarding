@@ -144,7 +144,7 @@ function Request-DeploymentPassword {
     }
 
     $securePassword = Read-Host `
-        -Prompt 'Enter approved deployment password' `
+        -Prompt 'Enter approved fseadm local deployment administrator password (used for account creation or validation; existing password will not be reset)' `
         -AsSecureString
 
     $plainTextPassword = ConvertTo-PlainTextPassword `

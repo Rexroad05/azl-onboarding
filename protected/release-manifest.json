@@ -1,6 +1,6 @@
 {
   "releaseVersion": "1.0.4",
-  "generatedAtUtc": "2026-10-28T17:02:40.4493379Z",
+  "generatedAtUtc": "2026-10-29T14:22:01.1656794Z",
   "files": [
     {
       "path": ".gitignore",
@@ -72,7 +72,7 @@
     },
     {
       "path": "azure/registration/Register-ArcNode.ps1",
-      "sha256": "0715A371B85A75C5CC7B82DEE2C862051CA250B039E8E1C11F0CABDAAC0C1E68"
+      "sha256": "E65DD17DCF6CA1A868CC3E3452AB189BE352E8BFAB643DDBA0444BDE812D2718"
     },
     {
       "path": "azure/registration/Test-ArcRegistration.ps1",
