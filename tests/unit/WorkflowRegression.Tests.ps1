@@ -57,6 +57,8 @@ $batch2BAdapters = @(
     'bootstrap/os/Ensure-ManagementNetwork.ps1',
     'bootstrap/os/Ensure-StorageNetwork.ps1',
     'bootstrap/os/Ensure-IPv6Baseline.ps1',
+    'bootstrap/os/Ensure-PowerShellRemoting.ps1',
+    'bootstrap/os/Ensure-RemoteDesktop.ps1',
     'bootstrap/os/Ensure-HostName.ps1'
 )
 
@@ -427,4 +429,122 @@ Describe 'Azure Local Factory Workflow Regression Suite' {
                 Should Match '(?m)^launcher/Start-ReadOnlyValidation\.ps1$'
         }
     }
+
+    Context 'Deployment Manager documentation' {
+        It 'includes Deployment Manager documentation in the release manifest' {
+            $releasePathText |
+                Should Match (
+                    '(?m)^docs/Deployment-Manager-README\.md$'
+                )
+
+            $releasePathText |
+                Should Match (
+                    '(?m)^docs/Deployment-Manager-SOP\.html$'
+                )
+        }
+
+        It 'provides Deployment Manager help and SOP actions' {
+            $managerContent |
+                Should Match 'Show-DeploymentManagerHelp'
+
+            $managerContent |
+                Should Match 'Help and Deployment Manager SOP'
+
+            $managerContent |
+                Should Match 'View Quick Start README in Console'
+
+            $managerContent |
+                Should Match 'Open Deployment Manager SOP in Browser'
+
+            $managerContent |
+                Should Match 'Show Report and Evidence Locations'
+        }
+    }
+
+    Context 'Remote Desktop support workflow' {
+        It 'includes RDP Ensure and validation operations in Stage 1.2B' {
+            $stage = @(
+                $phaseOne.stages |
+                    Where-Object {
+                        [int]$_.id -eq 2
+                    }
+            ) |
+                Select-Object -First 1
+
+            $operations = @($stage.operations) -join "`n"
+
+            $operations |
+                Should Match '(?m)^Ensure-RemoteDesktop$'
+
+            $operations |
+                Should Match '(?m)^Test-RemoteDesktop$'
+        }
+
+        It 'registers RDP operations as node-scoped factory operations' {
+            $factoryContent |
+                Should Match (
+                    '''Ensure-RemoteDesktop''\s*=\s*@\{\s*Scope\s*=\s*''Node'';\s*Mutates\s*=\s*\$true'
+                )
+
+            $factoryContent |
+                Should Match (
+                    '''Test-RemoteDesktop''\s*=\s*@\{\s*Scope\s*=\s*''Node'';\s*Mutates\s*=\s*\$false'
+                )
+        }
+
+        It 'includes RDP scripts in the release manifest' {
+            $releasePathText |
+                Should Match (
+                    '(?m)^bootstrap/os/Ensure-RemoteDesktop\.ps1$'
+                )
+
+            $releasePathText |
+                Should Match (
+                    '(?m)^preflight/Test-RemoteDesktop\.ps1$'
+                )
+        }
+    }
+
+    Context 'Deployment Manager failure recovery' {
+        It 'keeps the manager active when a factory action fails or blocks' {
+            $managerContent |
+                Should Match 'Protect-ManagerErrorMessage'
+
+            $managerContent |
+                Should Match 'WORKFLOW ACTION FAILED OR BLOCKED'
+
+            $managerContent |
+                Should Match 'The factory preserved workflow state'
+
+            $managerContent |
+                Should Match '\$workflowSucceeded\s*=\s*\$false'
+
+            $managerContent |
+                Should Match '\$safeFailureReason'
+        }
+
+        It 'catches manager errors without terminating the main menu loop' {
+            $managerContent |
+                Should Match 'DEPLOYMENT MANAGER ACTION FAILED'
+
+            $managerContent |
+                Should Match 'The Deployment Manager remains active'
+
+            $managerContent |
+                Should Match (
+                    'try\s*\{\s*while\s*\(\$true\)\s*\{\s*try\s*\{'
+                )
+
+            $managerContent |
+                Should Match (
+                    'switch\s*\(\$selection\.ToUpperInvariant\(\)\)'
+                )
+
+            $managerContent |
+                Should Match (
+                    'finally\s*\{\s*Clear-ManagerSessionCredentials'
+                )
+        }
+    }
+
 }

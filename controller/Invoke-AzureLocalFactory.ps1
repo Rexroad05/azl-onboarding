@@ -524,6 +524,219 @@ function Test-NativeArcInteractivePause {
     )
 }
 
+function Get-FactoryExecutionOutcome {
+    param(
+        [AllowNull()]
+        [object]$Result
+    )
+
+    if ($null -eq $Result) {
+        return 'FAILED'
+    }
+
+    $nestedResult = Get-StateValue `
+        -Object $Result `
+        -Name 'Result'
+
+    $isPaused = (
+        (Get-StateValue `
+            -Object $nestedResult `
+            -Name 'RequiresApproval') -eq $true -or
+        (Get-StateValue `
+            -Object $nestedResult `
+            -Name 'PauseRequested') -eq $true
+    )
+
+    if ($isPaused) {
+        return 'PAUSED'
+    }
+
+    if (
+        (Get-StateValue `
+            -Object $Result `
+            -Name 'Passed') -eq $false
+    ) {
+        return 'FAILED'
+    }
+
+    $outcome = [string](
+        Get-StateValue `
+            -Object $Result `
+            -Name 'Outcome'
+    )
+
+    switch ($outcome) {
+        'AlreadyCompliant' { return 'SKIPPED' }
+        'Skipped'          { return 'SKIPPED' }
+        'Changed'          { return 'CHANGED' }
+        default            { return 'PASSED' }
+    }
+}
+
+function Write-FactoryExecutionEvent {
+    param(
+        [Parameter(Mandatory)]
+        [string]$EventPath,
+
+        [Parameter(Mandatory)]
+        [string]$EventType,
+
+        [Parameter(Mandatory)]
+        [string]$Outcome,
+
+        [AllowNull()]
+        [Nullable[int]]$PhaseId,
+
+        [AllowNull()]
+        [Nullable[int]]$StageId,
+
+        [AllowNull()]
+        [string]$Operation,
+
+        [AllowNull()]
+        [string]$Scope,
+
+        [AllowNull()]
+        [string]$Node,
+
+        [AllowNull()]
+        [string]$Summary,
+
+        [AllowNull()]
+        [string]$Reason,
+
+        [AllowNull()]
+        [string]$Evidence,
+
+        [AllowNull()]
+        [Nullable[int]]$Attempt
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($Summary)) {
+        $Summary = Protect-FactoryErrorMessage `
+            -Message $Summary
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($Reason)) {
+        $Reason = Protect-FactoryErrorMessage `
+            -Message $Reason
+    }
+
+    $event = [ordered]@{
+        SchemaVersion = 'deployment-execution-event-v1'
+        TimestampUtc = [datetime]::UtcNow.ToString('o')
+        EventType = $EventType
+        Outcome = $Outcome
+        PhaseId = $PhaseId
+        StageId = $StageId
+        Operation = $Operation
+        Scope = $Scope
+        Node = $Node
+        Attempt = $Attempt
+        Summary = $Summary
+        Reason = $Reason
+        Evidence = $Evidence
+    }
+
+    $eventDirectory = Split-Path `
+        -Path $EventPath `
+        -Parent
+
+    New-Item `
+        -ItemType Directory `
+        -Force `
+        -Path $eventDirectory |
+        Out-Null
+
+    $json = $event |
+        ConvertTo-Json `
+            -Depth 10 `
+            -Compress
+
+    [System.IO.File]::AppendAllText(
+        $EventPath,
+        "$json`n",
+        [System.Text.UTF8Encoding]::new($false)
+    )
+}
+
+function Write-FactoryOperationEvents {
+    param(
+        [Parameter(Mandatory)]
+        [string]$EventPath,
+
+        [Parameter(Mandatory)]
+        [object[]]$Results,
+
+        [Parameter(Mandatory)]
+        [int]$PhaseId,
+
+        [Parameter(Mandatory)]
+        [int]$StageId,
+
+        [Parameter(Mandatory)]
+        [int]$Attempt,
+
+        [Parameter(Mandatory)]
+        [string]$Evidence
+    )
+
+    foreach ($result in @($Results)) {
+        $outcome = Get-FactoryExecutionOutcome `
+            -Result $result
+
+        $operation = [string](
+            Get-StateValue `
+                -Object $result `
+                -Name 'Operation'
+        )
+
+        $scope = [string](
+            Get-StateValue `
+                -Object $result `
+                -Name 'Scope'
+        )
+
+        $node = [string](
+            Get-StateValue `
+                -Object $result `
+                -Name 'Node'
+        )
+
+        $summary = [string](
+            Get-StateValue `
+                -Object $result `
+                -Name 'Summary'
+        )
+
+        $reason = [string](
+            Get-StateValue `
+                -Object $result `
+                -Name 'Reason'
+        )
+
+        $eventType = switch ($outcome) {
+            'FAILED' { 'OperationFailed' }
+            'PAUSED' { 'OperationPaused' }
+            default  { 'OperationCompleted' }
+        }
+
+        Write-FactoryExecutionEvent `
+            -EventPath $EventPath `
+            -EventType $eventType `
+            -Outcome $outcome `
+            -PhaseId $PhaseId `
+            -StageId $StageId `
+            -Operation $operation `
+            -Scope $scope `
+            -Node $node `
+            -Summary $summary `
+            -Reason $reason `
+            -Evidence $Evidence `
+            -Attempt $Attempt
+    }
+}
+
 $packageRoot = [IO.Path]::GetFullPath(
     (Join-Path $PSScriptRoot '..')
 )
@@ -664,6 +877,8 @@ $focusedResume = $false
 $focusedStartOperation = $null
 $allowPendingOperationResume = $false
 $resumeApproval = $null
+$context = $null
+$executionEventPath = $null
 
 try {
     $siteLock = [IO.File]::Open(
@@ -987,11 +1202,35 @@ try {
         ResumeApproval = $resumeApproval
         State = $state
         LastResults = [System.Collections.Generic.List[object]]::new()
+        ExecutionEventPath = (
+            Join-Path $runDirectory 'execution-events.jsonl'
+        )
     }
+
+    $executionEventPath = $context.ExecutionEventPath
 
     Save-FactoryState `
         -State $state `
         -Path $statePath
+
+    Write-FactoryExecutionEvent `
+        -EventPath $executionEventPath `
+        -EventType $(if ($Resume) { 'RunResumed' } else { 'RunStarted' }) `
+        -Outcome 'PASSED' `
+        -PhaseId $PhaseId `
+        -StageId $startStage `
+        -Operation $focusedStartOperation `
+        -Scope 'Site' `
+        -Node $null `
+        -Summary $(if ($Resume) {
+            'Deployment workflow resumed.'
+        }
+        else {
+            'Deployment workflow started.'
+        }) `
+        -Reason $null `
+        -Evidence 'deployment-state.json' `
+        -Attempt $null
 
     if ($resumeInteractiveAuthentication) {
         $state.status = 'RUNNING'
@@ -999,6 +1238,20 @@ try {
         Save-FactoryState `
             -State $state `
             -Path $statePath
+
+        Write-FactoryExecutionEvent `
+            -EventPath $executionEventPath `
+            -EventType 'InteractiveAuthenticationResumed' `
+            -Outcome 'PAUSED' `
+            -PhaseId $PhaseId `
+            -StageId $startStage `
+            -Operation $focusedStartOperation `
+            -Scope 'Node' `
+            -Node ([string]$state.pendingInteractiveAuthentication.Node) `
+            -Summary 'Interactive authentication resume session started.' `
+            -Reason $null `
+            -Evidence 'deployment-state.json' `
+            -Attempt $null
 
         Write-Host (
             "[$([datetime]::Now.ToString('HH:mm:ss'))] " +
@@ -1014,18 +1267,36 @@ try {
             -State $state `
             -Path $statePath
 
+        Write-FactoryExecutionEvent `
+            -EventPath $executionEventPath `
+            -EventType 'RebootStarted' `
+            -Outcome 'CHANGED' `
+            -PhaseId $PhaseId `
+            -StageId $startStage `
+            -Operation 'ApprovedRebootAndReconnect' `
+            -Scope 'Node' `
+            -Node ([string]$approvedRebootRequest.Node) `
+            -Summary 'Approved reboot and reconnect started.' `
+            -Reason $null `
+            -Evidence 'deployment-state.json' `
+            -Attempt $null
+
         try {
             $rebootResult = & "$PSScriptRoot\Invoke-NodeRebootAndReconnect.ps1" `
                 -Context $context `
                 -RebootRequest $approvedRebootRequest
 
+            $rebootEvidencePath = (
+                "evidence\phase-$PhaseId-stage-$startStage-" +
+                "approved-reboot-$($approvedRebootRequest.Node).json"
+            )
+
             Write-FactoryJson `
                 -Value $rebootResult `
                 -Path (
-                    Join-Path $runDirectory (
-                        "evidence\phase-$PhaseId-stage-$startStage-" +
-                        "approved-reboot-$($approvedRebootRequest.Node).json"
-                    )
+                    Join-Path `
+                        $runDirectory `
+                        $rebootEvidencePath
                 )
 
             $state.pendingReboot = $null
@@ -1040,6 +1311,20 @@ try {
             Save-FactoryState `
                 -State $state `
                 -Path $statePath
+
+            Write-FactoryExecutionEvent `
+                -EventPath $executionEventPath `
+                -EventType 'RebootCompleted' `
+                -Outcome 'CHANGED' `
+                -PhaseId $PhaseId `
+                -StageId $startStage `
+                -Operation 'ApprovedRebootAndReconnect' `
+                -Scope 'Node' `
+                -Node ([string]$approvedRebootRequest.Node) `
+                -Summary 'Approved reboot and reconnect completed.' `
+                -Reason $null `
+                -Evidence $rebootEvidencePath `
+                -Attempt $null
         }
         catch {
             $reason = Protect-FactoryErrorMessage `
@@ -1060,6 +1345,11 @@ try {
                 $state.nodes[$approvedRebootRequest.Node].lastError = $reason
             }
 
+            $rebootFailureEvidencePath = (
+                "evidence\phase-$PhaseId-stage-$startStage-" +
+                'reboot-reconnect-failure.json'
+            )
+
             Write-FactoryJson `
                 -Value @{
                     phaseId = $PhaseId
@@ -1071,15 +1361,28 @@ try {
                     timestamp = [datetime]::UtcNow.ToString('o')
                 } `
                 -Path (
-                    Join-Path $runDirectory (
-                        "evidence\phase-$PhaseId-stage-$startStage-" +
-                        'reboot-reconnect-failure.json'
-                    )
+                    Join-Path `
+                        $runDirectory `
+                        $rebootFailureEvidencePath
                 )
 
             Save-FactoryState `
                 -State $state `
                 -Path $statePath
+
+            Write-FactoryExecutionEvent `
+                -EventPath $executionEventPath `
+                -EventType 'RebootFailed' `
+                -Outcome 'FAILED' `
+                -PhaseId $PhaseId `
+                -StageId $startStage `
+                -Operation 'ApprovedRebootAndReconnect' `
+                -Scope 'Node' `
+                -Node ([string]$approvedRebootRequest.Node) `
+                -Summary 'Approved reboot and reconnect failed.' `
+                -Reason $reason `
+                -Evidence $rebootFailureEvidencePath `
+                -Attempt $null
 
             throw (
                 "Approved reboot/reconnect for node " +
@@ -1133,6 +1436,20 @@ try {
         Save-FactoryState `
             -State $state `
             -Path $statePath
+
+        Write-FactoryExecutionEvent `
+            -EventPath $executionEventPath `
+            -EventType 'PlanCompleted' `
+            -Outcome 'PASSED' `
+            -PhaseId $PhaseId `
+            -StageId $ThroughStage `
+            -Operation $null `
+            -Scope 'Site' `
+            -Node $null `
+            -Summary 'Plan-only workflow completed. No node operations were executed.' `
+            -Reason $null `
+            -Evidence 'plan.json' `
+            -Attempt $null
 
         Write-Output "Plan written to $runDirectory. No operations were executed."
         return
@@ -1195,6 +1512,22 @@ try {
         $passed = $false
 
         for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+            Write-FactoryExecutionEvent `
+                -EventPath $executionEventPath `
+                -EventType 'StageStarted' `
+                -Outcome 'PASSED' `
+                -PhaseId $PhaseId `
+                -StageId $stageId `
+                -Operation $null `
+                -Scope 'Site' `
+                -Node $null `
+                -Summary (
+                    "Phase $PhaseId Stage $stageId attempt $attempt started."
+                ) `
+                -Reason $null `
+                -Evidence 'deployment-state.json' `
+                -Attempt $attempt
+
             try {
                 $stageResult = & "$PSScriptRoot\Invoke-Stage.ps1" `
                     -Stage $stage `
@@ -1244,17 +1577,45 @@ try {
 
                     $state.phases[[string]$PhaseId].status = 'PAUSED'
 
+                    $pausedEvidencePath = (
+                        "evidence\phase-$PhaseId-stage-$stageId-paused.json"
+                    )
+
                     Write-FactoryJson `
                         -Value $stageResult `
                         -Path (
-                            Join-Path $runDirectory (
-                                "evidence\phase-$PhaseId-stage-$stageId-paused.json"
-                            )
+                            Join-Path `
+                                $runDirectory `
+                                $pausedEvidencePath
                         )
+
+                    Write-FactoryOperationEvents `
+                        -EventPath $executionEventPath `
+                        -Results @($stageResult.Results) `
+                        -PhaseId $PhaseId `
+                        -StageId $stageId `
+                        -Attempt $attempt `
+                        -Evidence $pausedEvidencePath
 
                     Save-FactoryState `
                         -State $state `
                         -Path $statePath
+
+                    Write-FactoryExecutionEvent `
+                        -EventPath $executionEventPath `
+                        -EventType 'StagePaused' `
+                        -Outcome 'PAUSED' `
+                        -PhaseId $PhaseId `
+                        -StageId $stageId `
+                        -Operation $state.returnToOperation `
+                        -Scope 'Site' `
+                        -Node ([string]$stageResult.PendingApproval.Node) `
+                        -Summary (
+                            "Phase $PhaseId Stage $stageId paused for $pauseType."
+                        ) `
+                        -Reason ([string]$stageResult.PendingApproval.Reason) `
+                        -Evidence $pausedEvidencePath `
+                        -Attempt $attempt
 
                     Write-Host (
                         "PAUSED: Phase $PhaseId Stage $stageId requires " +
@@ -1266,13 +1627,26 @@ try {
                     return
                 }
 
+                $stageEvidencePath = (
+                    "evidence\phase-$PhaseId-stage-$stageId-" +
+                    "attempt-$attempt.json"
+                )
+
                 Write-FactoryJson `
                     -Value $stageResult `
                     -Path (
-                        Join-Path $runDirectory (
-                            "evidence\phase-$PhaseId-stage-$stageId-attempt-$attempt.json"
-                        )
+                        Join-Path `
+                            $runDirectory `
+                            $stageEvidencePath
                     )
+
+                Write-FactoryOperationEvents `
+                    -EventPath $executionEventPath `
+                    -Results @($stageResult.Results) `
+                    -PhaseId $PhaseId `
+                    -StageId $stageId `
+                    -Attempt $attempt `
+                    -Evidence $stageEvidencePath
 
                 $passRecord = @{
                     status = 'PASS'
@@ -1292,6 +1666,22 @@ try {
                     -State $state `
                     -Path $statePath
 
+                Write-FactoryExecutionEvent `
+                    -EventPath $executionEventPath `
+                    -EventType 'StageCompleted' `
+                    -Outcome 'PASSED' `
+                    -PhaseId $PhaseId `
+                    -StageId $stageId `
+                    -Operation $null `
+                    -Scope 'Site' `
+                    -Node $null `
+                    -Summary (
+                        "Phase $PhaseId Stage $stageId completed successfully."
+                    ) `
+                    -Reason $null `
+                    -Evidence $stageEvidencePath `
+                    -Attempt $attempt
+
                 $passed = $true
                 break
             }
@@ -1310,6 +1700,11 @@ try {
                 $state.phases[[string]$PhaseId].stages[$stageKey] = `
                     $failureRecord
 
+                $failureEvidencePath = (
+                    "evidence\phase-$PhaseId-stage-$stageId-" +
+                    "attempt-$attempt.json"
+                )
+
                 Write-FactoryJson `
                     -Value @{
                         phaseId = $PhaseId
@@ -1321,14 +1716,38 @@ try {
                         partialResults = @($context.LastResults)
                     } `
                     -Path (
-                        Join-Path $runDirectory (
-                            "evidence\phase-$PhaseId-stage-$stageId-attempt-$attempt.json"
-                        )
+                        Join-Path `
+                            $runDirectory `
+                            $failureEvidencePath
                     )
+
+                Write-FactoryOperationEvents `
+                    -EventPath $executionEventPath `
+                    -Results @($context.LastResults) `
+                    -PhaseId $PhaseId `
+                    -StageId $stageId `
+                    -Attempt $attempt `
+                    -Evidence $failureEvidencePath
 
                 Save-FactoryState `
                     -State $state `
                     -Path $statePath
+
+                Write-FactoryExecutionEvent `
+                    -EventPath $executionEventPath `
+                    -EventType 'StageFailed' `
+                    -Outcome 'FAILED' `
+                    -PhaseId $PhaseId `
+                    -StageId $stageId `
+                    -Operation $null `
+                    -Scope 'Site' `
+                    -Node $null `
+                    -Summary (
+                        "Phase $PhaseId Stage $stageId attempt $attempt failed."
+                    ) `
+                    -Reason $reason `
+                    -Evidence $failureEvidencePath `
+                    -Attempt $attempt
 
                 if ($attempt -lt $maxAttempts) {
                     Start-Sleep -Seconds (
@@ -1352,6 +1771,24 @@ try {
             Save-FactoryState `
                 -State $state `
                 -Path $statePath
+
+            Write-FactoryExecutionEvent `
+                -EventPath $executionEventPath `
+                -EventType 'RunBlocked' `
+                -Outcome 'FAILED' `
+                -PhaseId $PhaseId `
+                -StageId $stageId `
+                -Operation $null `
+                -Scope 'Site' `
+                -Node $null `
+                -Summary (
+                    "Phase $PhaseId Stage $stageId is blocked."
+                ) `
+                -Reason (
+                    "Resolve the failure and resume from Stage $returnToStage."
+                ) `
+                -Evidence 'deployment-state.json' `
+                -Attempt $null
 
             throw (
                 "Phase $PhaseId Stage $stageId is BLOCKED. " +
@@ -1378,6 +1815,22 @@ try {
             -State $state `
             -Path $statePath
 
+        Write-FactoryExecutionEvent `
+            -EventPath $executionEventPath `
+            -EventType 'RunCompleted' `
+            -Outcome 'PASSED' `
+            -PhaseId $PhaseId `
+            -StageId $ThroughStage `
+            -Operation $null `
+            -Scope 'Site' `
+            -Node $null `
+            -Summary (
+                "Validation completed through Phase $PhaseId Stage $ThroughStage."
+            ) `
+            -Reason $null `
+            -Evidence 'deployment-state.json' `
+            -Attempt $null
+
         Write-Output (
             "VALIDATED through Phase $PhaseId Stage $ThroughStage for site " +
             "$($config.site.name)."
@@ -1385,21 +1838,6 @@ try {
 
         return
     }
-
-    $state.status = 'REPORTING'
-    $state.phases[[string]$PhaseId].status = 'REPORTING'
-
-    Save-FactoryState `
-        -State $state `
-        -Path $statePath
-
-    $reportResult = Invoke-FactoryOperation `
-        -Operation 'New-DeploymentReport' `
-        -Context $context
-
-    Write-FactoryJson `
-        -Value $reportResult `
-        -Path (Join-Path $runDirectory 'evidence\deployment-report-operation.json')
 
     $state.status = 'READY'
     $state.completedAt = [datetime]::UtcNow.ToString('o')
@@ -1417,12 +1855,81 @@ try {
         -State $state `
         -Path $statePath
 
+    Write-FactoryExecutionEvent `
+        -EventPath $executionEventPath `
+        -EventType 'RunCompleted' `
+        -Outcome 'PASSED' `
+        -PhaseId $PhaseId `
+        -StageId $ThroughStage `
+        -Operation $null `
+        -Scope 'Site' `
+        -Node $null `
+        -Summary (
+            "Phase $PhaseId completed and the workflow is READY."
+        ) `
+        -Reason $null `
+        -Evidence 'deployment-state.json' `
+        -Attempt $null
+
     Write-Output (
         "READY: Phase $PhaseId completed for site $($config.site.name). " +
         "Evidence: $runDirectory"
     )
 }
 finally {
+    try {
+        if (
+            $null -ne $context -and
+            -not [string]::IsNullOrWhiteSpace($context.RunDirectory) -and
+            (
+                Test-Path `
+                    -LiteralPath $context.RunDirectory `
+                    -PathType Container
+            )
+        ) {
+            $reportResult = Invoke-FactoryOperation `
+                -Operation 'New-DeploymentReport' `
+                -Context $context
+
+            Write-FactoryJson `
+                -Value $reportResult `
+                -Path (
+                    Join-Path `
+                        $context.RunDirectory `
+                        'evidence\deployment-report-operation.json'
+                )
+        }
+    }
+    catch {
+        $reportFailureReason = Protect-FactoryErrorMessage `
+            -Message $_.Exception.Message
+
+        Write-Warning (
+            "Deployment report generation failed: $reportFailureReason"
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($executionEventPath)) {
+            try {
+                Write-FactoryExecutionEvent `
+                    -EventPath $executionEventPath `
+                    -EventType 'ReportGenerationFailed' `
+                    -Outcome 'FAILED' `
+                    -PhaseId $PhaseId `
+                    -StageId $null `
+                    -Operation 'New-DeploymentReport' `
+                    -Scope 'Site' `
+                    -Node $null `
+                    -Summary 'Deployment report generation failed.' `
+                    -Reason $reportFailureReason `
+                    -Evidence $null `
+                    -Attempt $null
+            }
+            catch {
+                # Reporting failure must never mask the deployment outcome.
+            }
+        }
+    }
+
     Write-Progress `
         -Id 1 `
         -Activity "Azure Local Factory - Phase $PhaseId" `

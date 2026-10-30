@@ -2,6 +2,10 @@ hardware:
   manufacturer: PacStar
   platform: "451"
 
+  adapter_validation:
+    mode: ConvergedSwitch
+    require_storage_mapping_when_storage_enabled: true
+
   network_adapter:
     expected_driver_pattern: "*Intel*"
     minimum_link_speed_gbps: 1
@@ -19,12 +23,34 @@ hardware:
     vlan_mode: Untagged
     vlan_id: 0
 
+  disabled_embedded_adapter_pattern: null
+
+  acceptable_disabled_adapter_statuses:
+    - Disabled
+    - Not Present
+
   rdma:
     required: false
 
   sriov:
     required: false
 
-  storage:
-    intent: None
-    required_network_count: 0
+network:
+  dhcp:
+    disable_on:
+      - "vManagement(compute_management)"
+
+  adapter_transition:
+    temporarily_disable: []
+    reenable_after_management_configuration: []
+
+  adapter_state:
+    required_enabled:
+      - "vManagement(compute_management)"
+
+    required_disabled_patterns: []
+
+  management:
+    primary_adapter: "vManagement(compute_management)"
+    vlan_mode: Untagged
+    vlan_id: 0

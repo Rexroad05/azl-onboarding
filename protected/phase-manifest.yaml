@@ -55,11 +55,14 @@ workflow:
             - Ensure-IPv6Baseline
             - Ensure-LocalDeploymentAdministrator
             - Ensure-PowerShellRemoting
+            - Ensure-RemoteDesktop
             - Ensure-HostName
 
             # Post-Ensure HCN compliance validation.
             - Test-LocalAdministratorReadiness
             - Test-LocalAdministratorCredential
+            - Test-RemoteManagement
+            - Test-RemoteDesktop
             - Test-AdapterDesignState
             - Test-DhcpState
             - Test-ManagementVlanState

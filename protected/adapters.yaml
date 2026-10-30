@@ -16,6 +16,7 @@ adapters:
   # Phase 1.2 — HCN management-plane pre-bootstrap validation
   # ---------------------------------------------------------------------------
   Test-RemoteManagement: preflight/Test-RemoteManagement.ps1
+  Test-RemoteDesktop: preflight/Test-RemoteDesktop.ps1
   Test-NodeIdentity: preflight/Test-NodeIdentity.ps1
   Test-WinRMCertificateTrust: preflight/Test-WinRMCertificateTrust.ps1
   Test-LocalAdministratorReadiness: preflight/Test-LocalAdministratorReadiness.ps1
@@ -64,6 +65,7 @@ adapters:
   Ensure-IPv6Baseline: bootstrap/os/Ensure-IPv6Baseline.ps1
   Ensure-LocalDeploymentAdministrator: bootstrap/os/Ensure-LocalDeploymentAdministrator.ps1
   Ensure-PowerShellRemoting: bootstrap/os/Ensure-PowerShellRemoting.ps1
+  Ensure-RemoteDesktop: bootstrap/os/Ensure-RemoteDesktop.ps1
   Ensure-HostName: bootstrap/os/Ensure-HostName.ps1
   Get-AzureLocalDeploymentState: preflight/Get-AzureLocalDeploymentState.ps1
   New-ValidationFindingsReport: reports/New-ValidationFindingsReport.ps1

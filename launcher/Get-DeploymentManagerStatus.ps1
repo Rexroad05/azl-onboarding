@@ -352,6 +352,7 @@ foreach ($phase in @($phaseManifest.workflow.phases)) {
                     $reason = 'Pending configuration change was denied by the operator.'
                 }
             }
+            
             elseif (
                 $latestState.status -eq 'BLOCKED' -and
                 $latestState.Contains('returnToPhase') -and
@@ -359,10 +360,12 @@ foreach ($phase in @($phaseManifest.workflow.phases)) {
                 [int]$latestState.returnToPhase -eq $phaseId -and
                 [int]$latestState.returnToStage -eq $stageId
             ) {
-                $status = 'READY'
+                $status = 'BLOCKED'
+
                 $reason = (
                     'Previous execution blocked at this stage. Review failure evidence, ' +
-                    'correct the issue, and retry.'
+                    'correct the issue, clear cached credentials if applicable, and use ' +
+                    'Continue Recommended Workflow Action to intentionally retry.'
                 )
             }
             elseif (

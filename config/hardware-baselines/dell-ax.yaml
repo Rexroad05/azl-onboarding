@@ -1,4 +1,85 @@
-status: requires-model-specific-baseline
-model: REPLACE
-firmware_bundle: REPLACE
-bios_attributes: {}
+hardware:
+  manufacturer: Dell
+  platform: AX
+
+  adapter_validation:
+    mode: RoleMapped
+    require_storage_mapping_when_storage_enabled: true
+
+  network_adapter:
+    expected_driver_pattern: "*Mellanox*"
+    minimum_link_speed_gbps: 10
+
+  nic_mapping:
+    management1:
+      expected_name: Management1
+      pci_slot: 3
+      pci_function: 1
+      minimum_link_speed_gbps: 10
+
+    management2:
+      expected_name: Management2
+      pci_slot: 6
+      pci_function: 0
+      minimum_link_speed_gbps: 10
+
+    storage1:
+      expected_name: Storage1
+      pci_slot: 3
+      pci_function: 0
+      minimum_link_speed_gbps: 10
+
+    storage2:
+      expected_name: Storage2
+      pci_slot: 6
+      pci_function: 1
+      minimum_link_speed_gbps: 10
+
+  disabled_embedded_adapter_pattern: "Broadcom netXtreme*"
+
+  acceptable_disabled_adapter_statuses:
+    - Disabled
+    - Not Present
+
+  rdma:
+    required: true
+
+  sriov:
+    required: true
+
+network:
+  dhcp:
+    disable_on:
+      - Management1
+      - Management2
+      - Storage1
+      - Storage2
+
+  adapter_transition:
+    temporarily_disable:
+      - Management2
+      - Storage1
+      - Storage2
+
+    reenable_after_management_configuration:
+      - Management2
+      - Storage1
+      - Storage2
+
+  adapter_state:
+    required_enabled:
+      - Management1
+      - Management2
+      - Storage1
+      - Storage2
+
+    required_disabled_patterns:
+      - "Broadcom netXtreme*"
+
+  management:
+    primary_adapter: Management1
+
+  storage:
+    require_vlan_configuration: true
+    require_rdma: true
+    require_sriov: true

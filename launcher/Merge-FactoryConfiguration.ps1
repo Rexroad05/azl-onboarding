@@ -35,6 +35,120 @@ function Read-YamlFile {
     )
 }
 
+function Resolve-HardwareBaselinePath {
+    param(
+        [Parameter(Mandatory)]
+        [string]$PackageRoot,
+
+        [Parameter(Mandatory)]
+        [string]$BaselineFile
+    )
+
+    if ([string]::IsNullOrWhiteSpace($BaselineFile)) {
+        throw 'hardware.baseline_file is required.'
+    }
+
+    if ([IO.Path]::IsPathRooted($BaselineFile)) {
+        throw 'hardware.baseline_file must be repository-relative.'
+    }
+
+    $repositoryRoot = [IO.Path]::GetFullPath(
+        $PackageRoot
+    ).TrimEnd(
+        [IO.Path]::DirectorySeparatorChar,
+        [IO.Path]::AltDirectorySeparatorChar
+    )
+
+    $hardwareBaselineRoot = [IO.Path]::GetFullPath(
+        (Join-Path `
+            $repositoryRoot `
+            'config\hardware-baselines')
+    ).TrimEnd(
+        [IO.Path]::DirectorySeparatorChar,
+        [IO.Path]::AltDirectorySeparatorChar
+    )
+
+    $baselinePath = [IO.Path]::GetFullPath(
+        (Join-Path `
+            $repositoryRoot `
+            $BaselineFile)
+    )
+
+    $comparison = if ($IsWindows) {
+        [System.StringComparison]::OrdinalIgnoreCase
+    }
+    else {
+        [System.StringComparison]::Ordinal
+    }
+
+    $baselinePrefix = (
+        $hardwareBaselineRoot +
+        [IO.Path]::DirectorySeparatorChar
+    )
+
+    if (-not $baselinePath.StartsWith($baselinePrefix, $comparison)) {
+        throw (
+            'hardware.baseline_file must resolve under ' +
+            'config\hardware-baselines.'
+        )
+    }
+
+    if (-not (Test-Path -LiteralPath $baselinePath -PathType Leaf)) {
+        throw "Hardware baseline file does not exist: $baselinePath"
+    }
+
+    return $baselinePath
+}
+
+function Read-HardwareBaseline {
+    param(
+        [Parameter(Mandatory)]
+        [string]$PackageRoot,
+
+        [Parameter(Mandatory)]
+        [string]$BaselineFile
+    )
+
+    $baselinePath = Resolve-HardwareBaselinePath `
+        -PackageRoot $PackageRoot `
+        -BaselineFile $BaselineFile
+
+    $baseline = Read-YamlFile `
+        -Path $baselinePath
+
+    if ($baseline -isnot [System.Collections.IDictionary]) {
+        throw (
+            "Hardware baseline must deserialize to a YAML map: $baselinePath"
+        )
+    }
+
+    foreach ($key in $baseline.Keys) {
+        if ($key -notin @(
+                'hardware',
+                'network'
+            )) {
+            throw (
+                "Hardware baseline contains unsupported top-level key '$key': " +
+                "$baselinePath"
+            )
+        }
+    }
+
+    if (
+        -not $baseline.Contains('hardware') -or
+        $baseline.hardware -isnot [System.Collections.IDictionary]
+    ) {
+        throw (
+            "Hardware baseline must contain a hardware YAML map: $baselinePath"
+        )
+    }
+
+    return [pscustomobject]@{
+        Path = $baselinePath
+        Content = $baseline
+    }
+}
+
 function Get-ConfigValue {
     param(
         [AllowNull()]
@@ -1161,8 +1275,34 @@ $selectedSiteProfile = Get-ResolvedSiteProfile `
     -SiteName $operatorSiteName `
     -RequestedProfileName $requestedProfileName
 
-$effectiveDefaults = Merge-FactoryObject `
+$baselineSelection = Merge-FactoryObject `
     -Base $defaults `
+    -Overlay $selectedSiteProfile.Overrides
+
+$selectedHardware = Get-ConfigValue `
+    -Object $baselineSelection `
+    -Name 'hardware'
+
+if ($selectedHardware -isnot [System.Collections.IDictionary]) {
+    throw 'Resolved hardware configuration must be a YAML map.'
+}
+
+$baselineFile = [string](
+    Get-ConfigValue `
+        -Object $selectedHardware `
+        -Name 'baseline_file'
+)
+
+$hardwareBaseline = Read-HardwareBaseline `
+    -PackageRoot $PackageRoot `
+    -BaselineFile $baselineFile
+
+$defaultsWithHardwareBaseline = Merge-FactoryObject `
+    -Base $defaults `
+    -Overlay $hardwareBaseline.Content
+
+$effectiveDefaults = Merge-FactoryObject `
+    -Base $defaultsWithHardwareBaseline `
     -Overlay $selectedSiteProfile.Overrides
 
 $resolvedConfiguration = Merge-FactoryObject `
@@ -1205,6 +1345,22 @@ if ($phaseOne.Count -ne 1) {
 
 $resolvedConfiguration.site_profile = [ordered]@{
     name = $selectedSiteProfile.Name
+}
+
+$packageRootFullPath = [IO.Path]::GetFullPath(
+    $PackageRoot
+).TrimEnd(
+    [IO.Path]::DirectorySeparatorChar,
+    [IO.Path]::AltDirectorySeparatorChar
+)
+
+$resolvedConfiguration.hardware_baseline = [ordered]@{
+    path = (
+        [IO.Path]::GetRelativePath(
+            $packageRootFullPath,
+            $hardwareBaseline.Path
+        ).Replace('\', '/')
+    )
 }
 
 $resolvedConfiguration.adapters = $adapters.adapters
@@ -1281,6 +1437,7 @@ $configHash = (
 return [pscustomobject]@{
     Site = $Site
     SiteProfile = $selectedSiteProfile.Name
+    HardwareBaselinePath = $hardwareBaseline.Path
     OperatorInputPath = $operatorInputPath
     ResolvedConfigPath = $resolvedPath
     ResolvedConfigHash = $configHash

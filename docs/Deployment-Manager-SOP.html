@@ -1,0 +1,217 @@
+
+---
+
+## 2. New file: `docs\Deployment-Manager-SOP.html`
+
+```html
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Azure Local Deployment Manager SOP</title>
+<style>
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    margin: 24px;
+    max-width: 1200px;
+    color: #1f2937;
+    background: #f8fafc;
+  }
+  h1, h2, h3 {
+    color: #0f4c81;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 16px 0 24px 0;
+    background: #ffffff;
+  }
+  th, td {
+    border: 1px solid #cbd5e1;
+    padding: 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #e2e8f0;
+  }
+  code, pre {
+    font-family: Consolas, "Courier New", monospace;
+  }
+  code {
+    background: #e2e8f0;
+    padding: 2px 4px;
+    border-radius: 3px;
+  }
+  pre {
+    padding: 12px;
+    overflow-x: auto;
+    color: #e2e8f0;
+    background: #0f172a;
+    border-radius: 4px;
+  }
+  .callout {
+    padding: 14px;
+    margin: 16px 0;
+    border-left: 5px solid #0f4c81;
+    background: #e0f2fe;
+  }
+  .passed {
+    color: #166534;
+    font-weight: 700;
+    background: #dcfce7;
+  }
+  .skipped {
+    color: #1f2937;
+    background: #ffffff;
+  }
+  .changed {
+    color: #854d0e;
+    font-weight: 700;
+    background: #fef3c7;
+  }
+  .paused {
+    color: #854d0e;
+    font-weight: 700;
+    background: #fef9c3;
+  }
+  .failed {
+    color: #991b1b;
+    font-weight: 700;
+    background: #fee2e2;
+  }
+</style>
+</head>
+<body>
+<h1>Azure Local Deployment Manager Standard Operating Procedure</h1>
+
+<div class="callout">
+  <strong>Purpose:</strong> Use this procedure to execute and monitor the approved
+  Azure Local Phase 1 onboarding workflow through the Deployment Manager.
+</div>
+
+<h2>1. Normal Workflow Sequence</h2>
+
+<table>
+  <tr>
+    <th>Stage</th>
+    <th>Name</th>
+    <th>Expected Action</th>
+  </tr>
+  <tr>
+    <td>1.1</td>
+    <td>Input and Build Validation</td>
+    <td>Run validation. Correct input, package, naming, address, or readiness failures before proceeding.</td>
+  </tr>
+  <tr>
+    <td>1.2B</td>
+    <td>Ensure HCN Desired State</td>
+    <td>Review the planned node changes. Approve only authorized desired-state changes. Resume after an approved reboot if required.</td>
+  </tr>
+  <tr>
+    <td>1.3</td>
+    <td>Azure Local Node Bootstrap Readiness</td>
+    <td>Validate Azure Government context, subscription, providers, resource group, endpoints, and node readiness.</td>
+  </tr>
+  <tr>
+    <td>1.4</td>
+    <td>Azure Arc Machine Registration and Validation</td>
+    <td>Approve and start or resume the factory-owned Native Arc Registration Session. Validate Arc registration and node health.</td>
+  </tr>
+</table>
+
+<h2>2. Recommended Operator Procedure</h2>
+
+<ol>
+  <li>Start <code>launcher\Start-AzureLocalDeploymentManager.ps1</code>.</li>
+  <li>Review the manager summary and <strong>Next Recommended Action</strong>.</li>
+  <li>Select <strong>1 - Continue Recommended Workflow Action</strong> for normal workflow progression.</li>
+  <li>Use <strong>2 - Plan Current/Next Stage</strong> when a non-mutating review is required.</li>
+  <li>Use <strong>3 - Show Current Workflow Status</strong> to review stage gates and saved workflow state.</li>
+  <li>Use <strong>5 - View Last Failure and Evidence</strong> when a stage fails or becomes blocked.</li>
+  <li>Use <strong>6 - Show Workflow Map</strong> to confirm the current workflow position.</li>
+</ol>
+
+<h2>3. Approval and Pause Procedure</h2>
+
+<ol>
+  <li>Review the operation, node, approval type, and stated reason.</li>
+  <li>Confirm the action is authorized under local procedures.</li>
+  <li>Select <strong>Continue Recommended Workflow Action</strong>.</li>
+  <li>Enter the requested approval confirmation exactly as prompted.</li>
+  <li>Allow the manager to resume using the saved Run ID and workflow checkpoint.</li>
+</ol>
+
+<div class="callout">
+  <strong>Do not manually alter</strong> deployment-state files, approval records,
+  operation checkpoints, reports, or evidence files.
+</div>
+
+<h2>4. Native Arc Registration Procedure</h2>
+
+<ol>
+  <li>Complete Stages 1.1 through 1.3 successfully.</li>
+  <li>Review Stage 1.4 readiness and pending registration approval.</li>
+  <li>Use the recommended action to approve and start the Native Arc Registration Session.</li>
+  <li>If the workflow pauses for interactive authentication, return to the manager and use the recommended action to resume the saved session.</li>
+  <li>Do not launch a separate manual node-side Arc registration workflow while the factory session is active.</li>
+</ol>
+
+<h2>5. Status and Outcome Meanings</h2>
+
+<table>
+  <tr>
+    <th>Outcome</th>
+    <th>Meaning</th>
+  </tr>
+  <tr class="passed">
+    <td>PASSED</td>
+    <td>The operation completed successfully without a reported desired-state change.</td>
+  </tr>
+  <tr class="skipped">
+    <td>SKIPPED</td>
+    <td>The desired state already existed or no action was required.</td>
+  </tr>
+  <tr class="changed">
+    <td>CHANGED</td>
+    <td>The operation successfully modified desired state.</td>
+  </tr>
+  <tr class="paused">
+    <td>PAUSED</td>
+    <td>Workflow continuation requires operator approval, reboot completion, or interactive authentication.</td>
+  </tr>
+  <tr class="failed">
+    <td>FAILED</td>
+    <td>An operation or validation failed. Review sanitized evidence and use approved corrective procedures.</td>
+  </tr>
+</table>
+
+<h2>6. Reports and Evidence</h2>
+
+<p>Every factory run produces a run-scoped report set:</p>
+
+<pre>artifacts\&lt;site&gt;\&lt;RunId&gt;\
+    deployment-state.json
+    execution-events.jsonl
+    reports\deployment-report.html
+    reports\deployment-report.json
+    evidence\</pre>
+
+<ul>
+  <li><strong>deployment-report.html</strong> is the human-readable execution timeline.</li>
+  <li><strong>deployment-report.json</strong> is the machine-readable report.</li>
+  <li><strong>execution-events.jsonl</strong> records run, resume, operation, reboot, pause, failure, and completion events.</li>
+  <li><strong>evidence</strong> contains safe run-scoped JSON evidence.</li>
+</ul>
+
+<h2>7. Security and Data Handling</h2>
+
+<ul>
+  <li>Do not place credentials, passwords, tokens, secrets, or device codes into reports, evidence, tickets, or notes.</li>
+  <li>Use only authorized site inputs and approved operator accounts.</li>
+  <li>Follow organizational handling, records, access, need-to-know, security, and release procedures.</li>
+  <li>Escalate blocked workflow conditions through the appropriate technical and command channels.</li>
+</ul>
+
+</body>
+</html>

@@ -105,7 +105,7 @@ dns:
 
 ntp:
   servers:
-    - ntp-d.nist.gov
+    - pool.ntp.org
 
 active_directory:
   require_prebootstrap_workgroup_state: true

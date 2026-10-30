@@ -37,46 +37,9 @@ naming:
   node_name_pattern: "{classification}{site_id}HCN{node_number}"
 
 hardware:
-  manufacturer: Dell
-  platform: AX
+  # Default baseline for standard non-profiled Dell AX deployments.
+  # Authorized site profiles may select another protected baseline.
   baseline_file: config/hardware-baselines/dell-ax.yaml
-
-  network_adapter:
-    expected_driver_pattern: "*Mellanox*"
-
-  nic_mapping:
-    management1:
-      expected_name: Management1
-      pci_slot: 3
-      pci_function: 1
-      minimum_link_speed_gbps: 10
-
-    management2:
-      expected_name: Management2
-      pci_slot: 6
-      pci_function: 0
-      minimum_link_speed_gbps: 10
-
-    storage1:
-      expected_name: Storage1
-      pci_slot: 3
-      pci_function: 0
-      minimum_link_speed_gbps: 10
-
-    storage2:
-      expected_name: Storage2
-      pci_slot: 6
-      pci_function: 1
-      minimum_link_speed_gbps: 10
-
-  disabled_embedded_adapter_pattern: "Broadcom netXtreme*"
-
-  acceptable_disabled_adapter_statuses:
-    - Disabled
-    - Not Present
-
-  sriov:
-    required: true
 
 # Phase 2 readiness-only contract.
 # Site variables provide cluster, Azure, management, and storage values.
@@ -122,40 +85,22 @@ cluster_deployment:
 
 network:
   dhcp:
-    disable_on:
-      - Management1
-      - Management2
-      - Storage1
-      - Storage2
+    disable_on: []
 
   adapter_transition:
-    temporarily_disable:
-      - Management2
-      - Storage1
-      - Storage2
-
-    reenable_after_management_configuration:
-      - Management2
-      - Storage1
-      - Storage2
+    temporarily_disable: []
+    reenable_after_management_configuration: []
 
   adapter_state:
-    required_enabled:
-      - Management1
-      - Management2
-      - Storage1
-      - Storage2
+    required_enabled: []
+    required_disabled_patterns: []
 
-    required_disabled_patterns:
-      - "Broadcom netXtreme*"
-
-  management:
-    primary_adapter: Management1
+  management: {}
 
   storage:
-    require_vlan_configuration: true
-    require_rdma: true
-    require_sriov: true
+    require_vlan_configuration: false
+    require_rdma: false
+    require_sriov: false
 
 remote_management:
   protocol: WinRM-HTTPS
@@ -199,9 +144,18 @@ security:
   # the actual deployment password is authorized.
   validate_credentials: false
 
-  # Security exceptions are intentionally not automated by the factory.
+    # RDP is enabled for authorized remote and onsite support.
+  # Access restriction is enforced by upstream Juniper vSSR policy.
+  # Windows Firewall remains enabled; only the built-in Remote Desktop
+  # firewall rule group is enabled on the Azure Local node.
   rdp:
     enabled: true
+    port: 3389
+    require_nla: true
+    service_startup_type: Automatic
+    firewall_scope: LegacyOpenHostFirewall
+    external_access_control: JuniperVSSR
+    require_execution_host_connectivity_validation: true
 
   firewall:
     disable_all_profiles: false

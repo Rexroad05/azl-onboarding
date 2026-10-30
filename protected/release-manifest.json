@@ -1,6 +1,6 @@
 {
   "releaseVersion": "1.0.4",
-  "generatedAtUtc": "2026-10-29T18:47:18.9223124Z",
+  "generatedAtUtc": "2026-10-30T18:30:33.4308820Z",
   "files": [
     {
       "path": ".gitignore",
@@ -147,6 +147,10 @@
       "sha256": "24B4C6B66FB3B0AB61D2681EDBB0E67BF97728E53A2DD648B2711D6486AAEAF4"
     },
     {
+      "path": "bootstrap/os/Ensure-RemoteDesktop.ps1",
+      "sha256": "670B16398A0820F602E6E0157F35C26AED946397BD6675A54064EEC54709A440"
+    },
+    {
       "path": "bootstrap/os/Ensure-StorageNetwork.ps1",
       "sha256": "3FDD7796861DB0F7B7E3E6298D6233BE71005832FB1DADDD0260DE1350BEB637"
     },
@@ -176,19 +180,19 @@
     },
     {
       "path": "config/hardware-baselines/dell-ax.yaml",
-      "sha256": "0D6839F61D5879628CAFDE6CE97FEB03E05BC7F739B228C14017650196ADD108"
+      "sha256": "9BF7553BF42D8F373F6A11B6AB84CA13B1EE115F6FEC45C6D7DBE7128027A79A"
     },
     {
       "path": "config/hardware-baselines/pacstar-451-intel-i210.yaml",
-      "sha256": "F0AB2F4C4D0482F8DEB8C793CA4D0FE453CDE0A2276AF17D52EF449722416C95"
+      "sha256": "CEE530F314B8BEFEEC31CE0762D37D51C47DD0396845FE5D63FA4AC95F4AE9FF"
     },
     {
       "path": "controller/Factory.psm1",
-      "sha256": "F46B540ABE6DAE29082CEBB3620C9848D00A240BEFCA535D33FF74BBC8925377"
+      "sha256": "C69947BD89596E503A18220AA8842A520C5F7E852D6262D30F250DFDC1DB57B3"
     },
     {
       "path": "controller/Invoke-AzureLocalFactory.ps1",
-      "sha256": "0018BC67A0A5940A5D8721F7F9E4F5A3C8853D40D7B09857ACA0A7926BDEDCCE"
+      "sha256": "2992E91774230AF8080E1E3BCC799839C32517763C97ED6E42C55D53295A7614"
     },
     {
       "path": "controller/Invoke-NodeRebootAndReconnect.ps1",
@@ -229,6 +233,14 @@
     {
       "path": "docs/bootstrap-local-remoting.md",
       "sha256": "1A6F8207BB4818D2264EFA6B7522344F0D71443B1EFAECEA56090091739B4C80"
+    },
+    {
+      "path": "docs/Deployment-Manager-README.md",
+      "sha256": "7C6682E89AFC0991948863C5272ECC1952844749C135F13C404B2CE42CBA464B"
+    },
+    {
+      "path": "docs/Deployment-Manager-SOP.html",
+      "sha256": "7281D31FCFC4F69903EA0532D8CA24BD001C9B90873090E04F4C114C32037DD8"
     },
     {
       "path": "docs/failure-catalog.md",
@@ -292,7 +304,7 @@
     },
     {
       "path": "launcher/Get-DeploymentManagerStatus.ps1",
-      "sha256": "49F22AF06C6FF26EC650010D470CDBBE29DF5BEB4899106D64C54304A89753BE"
+      "sha256": "5228D57F7139477884DC8EFE6FADA34BE2557281F4EDB526040C834C342A061A"
     },
     {
       "path": "launcher/Initialize-AzureGovernmentSession.ps1",
@@ -304,7 +316,7 @@
     },
     {
       "path": "launcher/Merge-FactoryConfiguration.ps1",
-      "sha256": "D61FC2B352FBAD7369E0DE7E9DF3EED5DD0993A93F25537C8A9A29151EA22BE5"
+      "sha256": "0B974B55F6CB84CC25977B306F70C4CCBCEB6B526358581C8A6744E4B6920D3F"
     },
     {
       "path": "launcher/Set-DeploymentApproval.ps1",
@@ -312,7 +324,7 @@
     },
     {
       "path": "launcher/Start-AzureLocalDeploymentManager.ps1",
-      "sha256": "F0B135F0EC5DD04483C119748D040A5B5C7DF0C4BBA65F4E4A8A16B234D27638"
+      "sha256": "7CCBC2715136352B2E6A3B87B1BD3C78D41CE7D9A63EE33012FA22DB330D3522"
     },
     {
       "path": "launcher/Start-ReadOnlyValidation.ps1",
@@ -344,7 +356,7 @@
     },
     {
       "path": "preflight/Test-AdapterDesignState.ps1",
-      "sha256": "7662ABB59C0B89225381AACDCC23974AC180D1034AA747FAC8EB2BE917B3433A"
+      "sha256": "D303C921FEE5DE9F99A1307649CBE5AEB3006F545F78F98C972B83A197F0FF76"
     },
     {
       "path": "preflight/Test-AzureConnectivity.ps1",
@@ -468,7 +480,7 @@
     },
     {
       "path": "preflight/Test-NTP.ps1",
-      "sha256": "E4E2909B3687E5024944A6947F72E2243295AD197FDD6B3582B803E4916CB352"
+      "sha256": "218FB125AC2CD09BF29666AB3E78C916C6B2DB60A6BAEA12D072087E2C241974"
     },
     {
       "path": "preflight/Test-RdmaState.ps1",
@@ -477,6 +489,10 @@
     {
       "path": "preflight/Test-ReleasePackageIntegrity.ps1",
       "sha256": "FCAA8229453DDA2A0AFA8E7CFC69D2AAB46EDACFF7FD7B3CEA9EA69FBAB0C6AC"
+    },
+    {
+      "path": "preflight/Test-RemoteDesktop.ps1",
+      "sha256": "2D595518FACC1CA43CCE5F8F3CDCD48916A68EDFFABC4DD1AA2E05DFB621C792"
     },
     {
       "path": "preflight/Test-RemoteManagement.ps1",
@@ -516,7 +532,7 @@
     },
     {
       "path": "protected/adapters.yaml",
-      "sha256": "1522B512CC4EB0E5D73E6117C90A3C0D42D0C0F04E3483C17AFE1B8712934F15"
+      "sha256": "84B320F69B56EA23FC7DF571D05B5495952B16A2F8E40E437A26E2B2972B8508"
     },
     {
       "path": "protected/arc-agent-manifest.yaml",
@@ -524,11 +540,11 @@
     },
     {
       "path": "protected/defaults.yaml",
-      "sha256": "B73A0D02C779F0C3B557448C42496476F27B5AAED9FB360EF251B01F6E1BA0B0"
+      "sha256": "DB31BCD2578877B77783A4FD466DA0289D4A64E1CE6D9AA20E3802022BD2A742"
     },
     {
       "path": "protected/phase-manifest.yaml",
-      "sha256": "6B6C5400D4BAC1EFE58E805F2062D9E4CAD5B5DCF83C3F4CC383E7F77DAEA087"
+      "sha256": "122D06BE44C9A62573C437BDB19F3988B2B8B4163F39D27303DB28F30109B6A9"
     },
     {
       "path": "protected/read-only-validation-manifest.yaml",
@@ -540,7 +556,7 @@
     },
     {
       "path": "protected/site-profiles.yaml",
-      "sha256": "C9D99E82B6355CD57D26DBC7E37FE5EA01A249013E0D378132AF9E879F1D0DFE"
+      "sha256": "8E186432D630368EA700B0A4C01680BE468EC796C4932C694AE17AC73D4B1C8B"
     },
     {
       "path": "README.md",
@@ -584,7 +600,7 @@
     },
     {
       "path": "reports/New-DeploymentReport.ps1",
-      "sha256": "82ACB2C56F45595304061F9326CA59DC260964099E2FF7A34E983588DC3851A6"
+      "sha256": "1CAED03A8D72F53BB6FB0D5FB561A005617D8CD944C4C2ED901CC59CC2396523"
     },
     {
       "path": "reports/New-ValidationFindingsReport.ps1",
@@ -652,7 +668,7 @@
     },
     {
       "path": "tests/unit/LegacyWorkflowCoverage.Tests.ps1",
-      "sha256": "AA2EAC49323293ECEFFA0E2CBE95A188B62FC4113F67FEE97081D469098CC62A"
+      "sha256": "00D9607085B03F763A953DD504D9751212D0F983A66780ECB8CA9E5290A3E0B0"
     },
     {
       "path": "tests/unit/LocalAdministratorLifecycle.Tests.ps1",
@@ -707,7 +723,7 @@
       "sha256": "A268E6F10F7C52168ABB4D810D8BD7446E051D9CE35FAF41B2FD55EEE0D83EB7"
     },
     {
-      "path": "tests/unit/StageTargetedExecution.Tests.ps1",
+      "path": "tests/unit/StageTargetedPhase1Execution.Tests.ps1",
       "sha256": "9E219E5C0C75E3C707FED3D6B2DD69DADCFB6B56CE11029A8B5E95A76966E57C"
     },
     {
@@ -724,7 +740,7 @@
     },
     {
       "path": "tests/unit/WorkflowRegression.Tests.ps1",
-      "sha256": "A1941DA3909ACF0C7E37DDF63E7601E4E931CE7FF2743876DD348E0622B9294F"
+      "sha256": "E3A647F2112D49772F4E6836ED7F195781C6E233F6537918DAC675ECD3670C80"
     },
     {
       "path": "tools/Invoke-LegacyWorkflowCleanup.ps1",

@@ -20,6 +20,7 @@ $script:FactoryOperationCatalog = [ordered]@{
     # -------------------------------------------------------------------------
     'Test-AzureLocalDeploymentState'               = @{ Scope = 'Node'; Mutates = $false }
     'Test-RemoteManagement'                        = @{ Scope = 'Node'; Mutates = $false }
+    'Test-RemoteDesktop'                          = @{ Scope = 'Node'; Mutates = $false }
     'Test-WinRMCertificateTrust'                   = @{ Scope = 'Node'; Mutates = $false }
     'Test-NodeIdentity'                            = @{ Scope = 'Node'; Mutates = $false }
     'Test-LocalAdministratorReadiness'             = @{ Scope = 'Node'; Mutates = $false }
@@ -68,6 +69,7 @@ $script:FactoryOperationCatalog = [ordered]@{
     'Ensure-IPv6Baseline'                           = @{ Scope = 'Node'; Mutates = $true }
     'Ensure-LocalDeploymentAdministrator'           = @{ Scope = 'Node'; Mutates = $true }
     'Ensure-PowerShellRemoting'                     = @{ Scope = 'Node'; Mutates = $true }
+    'Ensure-RemoteDesktop'                         = @{ Scope = 'Node'; Mutates = $true }
     'Ensure-HostName'                               = @{ Scope = 'Node'; Mutates = $true }
     'Get-AzureLocalDeploymentState'                 = @{ Scope = 'Node'; Mutates = $false }
 
