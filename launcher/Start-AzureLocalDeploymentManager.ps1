@@ -279,8 +279,13 @@ function Get-WorkflowPosition {
     $pendingApproval = $Status.PendingApproval
 
     $latestWorkflowState = ''
-    if ($null -ne $latestState) {
-        $latestWorkflowState = [string]$latestState.status
+    if ($Status.ConfigChanged) {
+        return [pscustomobject]@{
+            WorkflowState = 'READY'
+            PhaseId = 1
+            StageId = 1
+            ReturnOperation = $null
+        }
     }
 
     # An active approval, paused workflow, approved resume, or failed workflow
@@ -292,7 +297,7 @@ function Get-WorkflowPosition {
             $latestWorkflowState -in @(
                 'APPROVED',
                 'PAUSED',
-                'FAILED',,
+                'FAILED',
                 'BLOCKED',
                 'REBOOT_REQUIRED'
             )
@@ -1344,6 +1349,7 @@ function Invoke-RecommendedWorkflowAction {
     }
 
     $hasBlockedWorkflow = (
+        -not $Status.ConfigChanged -and
         $null -ne $Status.LatestState -and
         $Status.LatestState.status -eq 'BLOCKED'
     )
@@ -1884,6 +1890,7 @@ Write-Verbose (
                 )
 
                 $hasBlockedWorkflow = (
+                    -not $status.ConfigChanged -and
                     $null -ne $status.LatestState -and
                     $status.LatestState.status -eq 'BLOCKED'
                 )

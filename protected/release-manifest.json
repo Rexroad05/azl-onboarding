@@ -1,6 +1,6 @@
 {
   "releaseVersion": "1.0.4",
-  "generatedAtUtc": "2026-10-30T18:30:33.4308820Z",
+  "generatedAtUtc": "2026-10-30T20:54:10.8510070Z",
   "files": [
     {
       "path": ".gitignore",
@@ -324,7 +324,7 @@
     },
     {
       "path": "launcher/Start-AzureLocalDeploymentManager.ps1",
-      "sha256": "7CCBC2715136352B2E6A3B87B1BD3C78D41CE7D9A63EE33012FA22DB330D3522"
+      "sha256": "FA69A0C3BE7ACA5A48C93A681CD7AF80DA869DE97807109633258DFDE44AA3EF"
     },
     {
       "path": "launcher/Start-ReadOnlyValidation.ps1",
